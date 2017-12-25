@@ -50,7 +50,7 @@ See [example.json](example.json) and [builder.go](pkg/builder/builder.go) for de
 ## Building
 As this is an alpha release - consider using a vm to run this code for isolation.
 
-This project uses go dep tool for dependencies.
+This project uses [go dep](https://github.com/golang/dep) tool for dependencies.
 To build:
 ```bash
 mkdir -p $GOPATH/src/github.com/solo-io/
@@ -79,7 +79,7 @@ go build && scp packer-builder-arm-image example.json USER@IP-OF-VM:
 ```
 (note the colon after the ip of the vm)
 
-Then, (install packer)[https://www.packer.io/docs/install/index.html] in the vm, the ssh to the vm and test:
+Then, [install packer](https://www.packer.io/docs/install/index.html) in the vm, the ssh to the vm and test:
 ```
 ssh USER@IP-OF-VM
 sudo packer build -debug example.json
