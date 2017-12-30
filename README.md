@@ -1,7 +1,5 @@
 # Packer plugin for ARM images
 
-## Overview
-
 This plugin lets you take an existing ARM image, and modify it on your x86 machine.
 It is optimized for raspberry pi use case - MBR partition table, with the file system partition 
 being the last partition.
