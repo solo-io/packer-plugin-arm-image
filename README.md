@@ -1,4 +1,4 @@
-# Packer plugin for ARM images.
+# Packer plugin for ARM images
 
 ## Overview
 
