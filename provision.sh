@@ -6,9 +6,9 @@
 #
 #                 By default, sets up environment, builds the plugin, and image
 ##
-
+set -x
 # Set to false to disable auto building
-export RUNBUILDS = true
+export RUNBUILDS=true
 
 # Update the system
 sudo apt-get update -qq
@@ -46,14 +46,14 @@ go get -u github.com/golang/dep/cmd/dep
 
 # Download and install packer
 wget https://releases.hashicorp.com/packer/1.1.3/packer_1.1.3_linux_amd64.zip \
-    -O /tmp/packer_1.1.3_linux_amd64.zip
+    -q -O /tmp/packer_1.1.3_linux_amd64.zip
 pushd /tmp
 unzip packer_1.1.3_linux_amd64.zip
 sudo cp packer /usr/local/bin
 popd
 
 # If RUNBUILDS is true, build the plugin, then the image
-if [[ RUNBUILDS = true ]]; then{
+if [[ "$RUNBUILDS" = true ]]; then {
 
     # Now ready to build the plugin
     mkdir -p $GOPATH/src/github.com/solo-io/
@@ -80,7 +80,6 @@ if [[ RUNBUILDS = true ]]; then{
         exit
     } else {
         echo "Attempting to build image"
-        pushd /home/vagrant
 
         # If there is a custom json, try that one
         # otherwise go with the default
