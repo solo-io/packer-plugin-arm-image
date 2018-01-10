@@ -59,6 +59,17 @@ dep ensure
 go build
 ```
 
+## Vagrant Test Environment
+This project includes a Vagrant file and helper script that build a VM test environment. The test environment attempts to automatically build the plugin and a packer build. To disable this behavior set ```RUNBUILDS = false``` in ```provision.sh```
+
+To use the Vagrant environment, run the following commands:
+
+```
+git clone https://github.com/solo-io/packer-builder-arm-image
+cd packer-builder-arm-image
+vagrant up && vagrant ssh
+```
+
 ## Test VM
 Testing in a VM (vs directly on your laptop) is highly recommended, though not manadatory. To test in a VM:
 
