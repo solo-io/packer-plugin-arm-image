@@ -12,6 +12,8 @@ import (
 	"github.com/mitchellh/multistep"
 	filetype "gopkg.in/h2non/filetype.v1"
 	"gopkg.in/h2non/filetype.v1/matchers"
+
+	"github.com/ulikunitz/xz"
 )
 
 type stepCopyImage struct {
@@ -48,6 +50,9 @@ func (s *stepCopyImage) open(fpath string) (io.ReadCloser, error) {
 	case matchers.TypeZip:
 		s.ui.Say("Image is a zip file.")
 		return s.openzip(f)
+	case matchers.TypeXz:
+		s.ui.Say("Image is a xz file.")
+		return s.openxz(f)
 	default:
 		return f, err
 	}
@@ -84,6 +89,25 @@ func (s *stepCopyImage) openzip(f *os.File) (io.ReadCloser, error) {
 
 	//transfer ownership
 	mc := &multiCloser{zippedfileReader, []io.Closer{zippedfileReader, f}}
+	f = nil
+
+	return mc, nil
+}
+
+func (s *stepCopyImage) openxz(f *os.File) (io.ReadCloser, error) {
+	defer func() {
+		if f != nil {
+			f.Close()
+		}
+	}()
+
+	r, err := xz.NewReader(f)
+	if err != nil {
+		return nil, err
+	}
+
+	//transfer ownership
+	mc := &multiCloser{r, []io.Closer{f}}
 	f = nil
 
 	return mc, nil

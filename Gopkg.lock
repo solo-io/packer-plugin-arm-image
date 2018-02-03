@@ -92,6 +92,12 @@
   revision = "0e0d6e869525973a9b36093f6ddc9d91b9fc2d71"
 
 [[projects]]
+  name = "github.com/ulikunitz/xz"
+  packages = [".","internal/hash","internal/xlog","lzma"]
+  revision = "0c6b41e72360850ca4f98dc341fd999726ea007f"
+  version = "v0.5.4"
+
+[[projects]]
   name = "gopkg.in/h2non/filetype.v1"
   packages = [".","matchers","types"]
   revision = "cc14fdc9ca0e4c2bafad7458f6ff79fd3947cfbb"
@@ -100,6 +106,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4a268bffa541e0f44845df204f51bbd8a8321c853fd4742ff61ecc12a40c4425"
+  inputs-digest = "b52ebbbf8df9153dbcbbdebf4fa49e5e1f5c3d8492078d12e7538f2b02774b61"
   solver-name = "gps-cdcl"
   solver-version = 1
