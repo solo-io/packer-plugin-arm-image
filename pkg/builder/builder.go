@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	packer_common "github.com/hashicorp/packer/common"
 	"github.com/hashicorp/packer/helper/config"
@@ -20,12 +21,17 @@ const BuilderId = "yuval-k.arm-image"
 
 var knownTypes map[string][]string
 
-const defaultType = "raspberrypi"
+const (
+	RaspberryPi = "raspberrypi"
+	BeagleBone  = "bbb"
+)
+
+const defaultType = RaspberryPi
 
 func init() {
 	knownTypes = make(map[string][]string)
-	knownTypes["raspberrypi"] = []string{"/boot", "/"}
-	knownTypes["bbb"] = []string{"/boot", "/"}
+	knownTypes[RaspberryPi] = []string{"/boot", "/"}
+	knownTypes[BeagleBone] = []string{"/"}
 }
 
 type Config struct {
@@ -57,6 +63,24 @@ func NewBuilder() *Builder {
 		context: ctx,
 		cancel:  cancel,
 	}
+}
+
+func (b *Builder) autoDetectType() string {
+	if len(b.config.ISOUrls) < 1 {
+		return ""
+	}
+	url := b.config.ISOUrls[0]
+
+	if strings.Contains(url, "raspbian") {
+		return RaspberryPi
+	}
+
+	if strings.Contains(url, "bone") {
+		return BeagleBone
+	}
+
+	return ""
+
 }
 
 func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
@@ -97,7 +121,11 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 
 	if b.config.ImageType == "" && len(b.config.ImageMounts) == 0 {
 		// defaults...
-		b.config.ImageType = defaultType
+		b.config.ImageType = b.autoDetectType()
+		if b.config.ImageType == "" {
+			b.config.ImageType = defaultType
+		}
+
 		b.config.ImageMounts = knownTypes[b.config.ImageType]
 		//		errs = packer.MultiErrorAppend(errs, errors.New("must provide either image_type or image_mounts"))
 	} else if b.config.ImageType != "" {
