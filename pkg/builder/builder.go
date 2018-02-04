@@ -23,7 +23,7 @@ var knownTypes map[string][]string
 
 const (
 	RaspberryPi = "raspberrypi"
-	BeagleBone  = "bbb"
+	BeagleBone  = "beaglebone"
 )
 
 const defaultType = RaspberryPi
