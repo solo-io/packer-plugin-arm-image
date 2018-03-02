@@ -20,6 +20,7 @@ import (
 const BuilderId = "yuval-k.arm-image"
 
 var knownTypes map[string][]string
+var knownArgs map[string][]string
 
 const (
 	RaspberryPi = "raspberrypi"
@@ -30,8 +31,11 @@ const defaultType = RaspberryPi
 
 func init() {
 	knownTypes = make(map[string][]string)
+	knownArgs = make(map[string][]string)
 	knownTypes[RaspberryPi] = []string{"/boot", "/"}
 	knownTypes[BeagleBone] = []string{"/"}
+
+	knownArgs[BeagleBone] = []string{"-cpu", "cortex-a8"}
 }
 
 type Config struct {
@@ -46,6 +50,8 @@ type Config struct {
 	ChrootMounts [][]string `mapstructure:"chroot_mounts"`
 
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
+
+	QemuArgs []string `mapstructure:"qemu_args"`
 
 	ctx interpolate.Context
 }
@@ -119,24 +125,30 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 		b.config.CommandWrapper = "{{.Command}}"
 	}
 
-	if b.config.ImageType == "" && len(b.config.ImageMounts) == 0 {
+	if b.config.ImageType == "" {
 		// defaults...
 		b.config.ImageType = b.autoDetectType()
 		if b.config.ImageType == "" {
 			b.config.ImageType = defaultType
 		}
+	} else {
+		if _, ok := knownTypes[b.config.ImageType]; !ok {
 
-		b.config.ImageMounts = knownTypes[b.config.ImageType]
-		//		errs = packer.MultiErrorAppend(errs, errors.New("must provide either image_type or image_mounts"))
-	} else if b.config.ImageType != "" {
-		if mounts, ok := knownTypes[b.config.ImageType]; ok {
-			b.config.ImageMounts = mounts
-		} else {
 			var validvalues []string
 			for k := range knownTypes {
 				validvalues = append(validvalues, k)
 			}
 			errs = packer.MultiErrorAppend(errs, fmt.Errorf("unknown image_type. must be one of: %v", validvalues))
+			b.config.ImageType = ""
+		}
+	}
+
+	if b.config.ImageType != "" {
+		if len(b.config.ImageMounts) == 0 {
+			b.config.ImageMounts = knownTypes[b.config.ImageType]
+		}
+		if len(b.config.QemuArgs) == 0 {
+			b.config.QemuArgs = knownArgs[b.config.ImageType]
 		}
 	}
 
@@ -198,7 +210,7 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	steps = append(steps,
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path"},
 		&StepMountExtra{ChrootKey: "mount_path"},
-		&stepQemuUserStatic{ChrootKey: "mount_path"},
+		&stepQemuUserStatic{ChrootKey: "mount_path", Args: Args{Args: b.config.QemuArgs}},
 		&stepRegisterBinFmt{},
 		&StepChrootProvision{ChrootKey: "mount_path"},
 	)
