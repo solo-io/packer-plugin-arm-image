@@ -8,6 +8,8 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"sync/atomic"
+	"time"
 
 	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
@@ -29,7 +31,7 @@ func (s *stepCopyImage) Run(_ context.Context, state multistep.StateBag) multist
 	s.ui.Say("Copying source image.")
 
 	dstfile := filepath.Join(config.OutputDir, "image")
-	err := s.copy(fromFile, config.OutputDir, "image")
+	err := s.copy(state, fromFile, config.OutputDir, "image")
 	if err != nil {
 		s.ui.Error(fmt.Sprintf("%v", err))
 		return multistep.ActionHalt
@@ -126,7 +128,79 @@ func (n *multiCloser) Close() error {
 	return nil
 }
 
-func (s *stepCopyImage) copy(src, dir, filename string) error {
+type ProgressWriter struct {
+	done      int32
+	totalData uint64
+
+	lastProgressData uint64
+	lastProgressTime time.Time
+}
+
+func NewProgressWriter() *ProgressWriter {
+	return &ProgressWriter{
+		lastProgressTime: time.Now(),
+	}
+}
+func (pw *ProgressWriter) Write(data []byte) (int, error) {
+	if atomic.LoadInt32(&pw.done) != 0 {
+		return 0, errors.New("copy interrupted")
+	}
+	atomic.AddUint64(&pw.totalData, uint64(len(data)))
+	return len(data), nil
+}
+
+func (pw *ProgressWriter) Progress() float64 {
+	currentData := atomic.LoadUint64(&pw.totalData)
+	now := time.Now()
+	deltat := now.Sub(pw.lastProgressTime)
+	deltadata := currentData - pw.lastProgressData
+
+	pw.lastProgressData = currentData
+	pw.lastProgressTime = now
+	// TODO: is this the right way to measure? maybe change 1e6 to float64(1 << 20)?
+	return (float64(deltadata) / 1e6) / deltat.Seconds()
+}
+
+func (pw *ProgressWriter) Stop() {
+	atomic.StoreInt32(&pw.done, 1)
+}
+
+func (s *stepCopyImage) copy_progress(state multistep.StateBag, dst io.Writer, src io.Reader) error {
+	ui := state.Get("ui").(packer.Ui)
+	l := NewProgressWriter()
+	rdr := io.TeeReader(src, l)
+
+	copyCompleteCh := make(chan error, 1)
+	go func() {
+		var err error
+		_, err = io.Copy(dst, rdr)
+		copyCompleteCh <- err
+	}()
+
+	progressTicker := time.NewTicker(5 * time.Second)
+	defer progressTicker.Stop()
+
+	for {
+		select {
+		case err := <-copyCompleteCh:
+
+			return err
+		case <-progressTicker.C:
+			progress := l.Progress()
+			if progress >= 0 {
+				ui.Message(fmt.Sprintf("Copy speed: %f MB/s", progress))
+			}
+		case <-time.After(1 * time.Second):
+			if _, ok := state.GetOk(multistep.StateCancelled); ok {
+				ui.Say("Interrupt received. Cancelling copy...")
+				l.Stop()
+				return errors.New("interrupted")
+			}
+		}
+	}
+}
+
+func (s *stepCopyImage) copy(state multistep.StateBag, src, dir, filename string) error {
 
 	srcf, err := s.open(src)
 	if err != nil {
@@ -145,7 +219,7 @@ func (s *stepCopyImage) copy(src, dir, filename string) error {
 	}
 	defer dstf.Close()
 
-	_, err = io.Copy(dstf, srcf)
+	err = s.copy_progress(state, dstf, srcf)
 
 	if err != nil {
 		return err
