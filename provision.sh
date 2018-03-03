@@ -29,7 +29,8 @@ sudo apt-get install -y \
     curl \
     vim \
     unzip \
-    golang-1.9-go
+    golang-1.9-go \
+    gcc
 
 # Set GO paths for vagrant user
 echo "export GOROOT=/usr/lib/go-1.9
