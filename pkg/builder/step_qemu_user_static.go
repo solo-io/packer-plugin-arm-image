@@ -79,6 +79,8 @@ func (s *stepQemuUserStatic) makeWrapper(ui packer.Ui, state multistep.StateBag)
 
 	t := template.Must(template.New("qemu-wrapper").Parse(argsTemplate))
 
+	s.Args.PathToQemuInChroot += wrapped
+
 	var buffer bytes.Buffer
 	t.Execute(&buffer, s.Args)
 
@@ -101,10 +103,9 @@ func (s *stepQemuUserStatic) makeWrapper(ui packer.Ui, state multistep.StateBag)
 		s.destQemu = destWrapper
 		return err
 	}
-	s.Args.PathToQemuInChroot += wrapped
 
 	ui.Say("compiling arguments wrapper")
-	err = run(state, fmt.Sprintf("gcc -static %s -s -o %s", tmpfn, destWrapper))
+	err = run(state, fmt.Sprintf("gcc -g -static %s -o %s", tmpfn, destWrapper))
 	if err != nil {
 		return err
 	}
