@@ -177,7 +177,7 @@ func (s *stepCopyImage) copy_progress(state multistep.StateBag, dst io.Writer, s
 		copyCompleteCh <- err
 	}()
 
-	progressTicker := time.NewTicker(5 * time.Second)
+	progressTicker := time.NewTicker(15 * time.Second)
 	defer progressTicker.Stop()
 
 	for {
@@ -188,7 +188,7 @@ func (s *stepCopyImage) copy_progress(state multistep.StateBag, dst io.Writer, s
 		case <-progressTicker.C:
 			progress := l.Progress()
 			if progress >= 0 {
-				ui.Message(fmt.Sprintf("Copy speed: %f MB/s", progress))
+				ui.Message(fmt.Sprintf("Copy speed: %7.2f MB/s", progress))
 			}
 		case <-time.After(1 * time.Second):
 			if _, ok := state.GetOk(multistep.StateCancelled); ok {
