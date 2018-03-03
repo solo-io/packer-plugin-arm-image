@@ -14,10 +14,11 @@ import (
 )
 
 const qemyBinary = "/usr/bin/qemu-arm-static"
+const wrapped = "-wrapped"
 
 type Args struct {
-	Args          []string
-	WrapperSuffix string
+	Args               []string
+	PathToQemuInChroot string
 }
 
 type stepQemuUserStatic struct {
@@ -28,21 +29,25 @@ type stepQemuUserStatic struct {
 }
 
 const argsTemplate = `
+// for malloc
 #include <stdlib.h>
+// for execve
 #include <unistd.h>
+// for memcpy
+#include <string.h>
 
 int main(int argc, char **argv, char **envp) {
- unsigned int length = {{len .Args}}; 
- char *qemuargs = malloc(sizeof(argv[0]) * (argc + length + 1));
- int index = 0;
+	unsigned int length = {{len .Args}}; 
+	char **qemuargs = malloc(sizeof(argv[0]) * (argc + length + 1));
+	int index = 0;
 
- qemuargs[index++] = argv[0];
+	qemuargs[index++] = argv[0];
 
- {{range .Args}}qemuargs[index++] = "{{.}}";
- {{end}}
- qemuargs[argc + length] = NULL;
- memcpy(qemuargs + index, argv + 1, sizeof(argv[0]) * (argc - 1));
- return execve("/usr/bin/qemu-arm-static{{.WrapperSuffix}}", qemuargs, envp);
+	{{range .Args}}qemuargs[index++] = "{{.}}";
+	{{end}}
+	memcpy(qemuargs + index, argv + 1, sizeof(argv[0]) * (argc - 1));
+	qemuargs[argc + length] = NULL;
+	return execve("{{.PathToQemuInChroot}}", qemuargs, envp);
 }
 `
 
@@ -53,13 +58,14 @@ func (s *stepQemuUserStatic) Run(_ context.Context, state multistep.StateBag) mu
 	ui.Say("Installing qemu-arm-static in the chroot")
 	srcqemu := qemyBinary
 	s.destQemu = filepath.Join(chrootDir, srcqemu)
+	s.Args.PathToQemuInChroot = srcqemu
 
-	err := s.makeWrapper(ui, state)
+	err := run(state, fmt.Sprintf("cp %s %s", srcqemu, s.destQemu))
 	if err != nil {
 		return multistep.ActionHalt
 	}
 
-	err = run(state, fmt.Sprintf("cp %s %s", srcqemu, s.destQemu))
+	err = s.makeWrapper(ui, state)
 	if err != nil {
 		return multistep.ActionHalt
 	}
@@ -70,7 +76,6 @@ func (s *stepQemuUserStatic) makeWrapper(ui packer.Ui, state multistep.StateBag)
 	if len(s.Args.Args) == 0 {
 		return nil
 	}
-	s.Args.WrapperSuffix = "-wrapped"
 
 	t := template.Must(template.New("qemu-wrapper").Parse(argsTemplate))
 
@@ -89,13 +94,14 @@ func (s *stepQemuUserStatic) makeWrapper(ui packer.Ui, state multistep.StateBag)
 	}
 
 	destWrapper := s.destQemu
-	s.destQemu += s.Args.WrapperSuffix
+	s.destQemu += wrapped
 
 	err = run(state, fmt.Sprintf("mv %s %s", destWrapper, s.destQemu))
 	if err != nil {
 		s.destQemu = destWrapper
 		return err
 	}
+	s.Args.PathToQemuInChroot += wrapped
 
 	ui.Say("compiling arguments wrapper")
 	err = run(state, fmt.Sprintf("gcc -static %s -s -o %s", tmpfn, destWrapper))
