@@ -1,14 +1,15 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 	"sort"
 
+	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
-	"github.com/mitchellh/multistep"
 )
 
 type stepMountImage struct {
@@ -18,7 +19,7 @@ type stepMountImage struct {
 	mountpoints   []string
 }
 
-func (s *stepMountImage) Run(state multistep.StateBag) multistep.StepAction {
+func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 
 	// Read our value and assert that it is they type we want

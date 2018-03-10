@@ -1,12 +1,13 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"os/exec"
 	"strings"
 
+	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
-	"github.com/mitchellh/multistep"
 )
 
 type stepMapImage struct {
@@ -14,7 +15,7 @@ type stepMapImage struct {
 	ResultKey string
 }
 
-func (s *stepMapImage) Run(state multistep.StateBag) multistep.StepAction {
+func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	// Read our value and assert that it is they type we want
 	image := state.Get(s.ImageKey).(string)
 	ui := state.Get("ui").(packer.Ui)

@@ -1,11 +1,12 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/mitchellh/multistep"
+	"github.com/hashicorp/packer/helper/multistep"
 )
 
 const qemyBinary = "/usr/bin/qemu-arm-static"
@@ -15,7 +16,7 @@ type stepQemuUserStatic struct {
 	destQemu  string
 }
 
-func (s *stepQemuUserStatic) Run(state multistep.StateBag) multistep.StepAction {
+func (s *stepQemuUserStatic) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	// Read our value and assert that it is they type we want
 	chrootDir := state.Get(s.ChrootKey).(string)
 

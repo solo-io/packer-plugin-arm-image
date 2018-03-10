@@ -3,10 +3,11 @@ package builder
 // taken from here: https://github.com/hashicorp/packer/blob/81522dced0b25084a824e79efda02483b12dc7cd/builder/amazon/chroot/step_chroot_provision.go
 
 import (
+	"context"
 	"log"
 
+	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
-	"github.com/mitchellh/multistep"
 )
 
 // StepChrootProvision provisions the instance within a chroot.
@@ -14,7 +15,7 @@ type StepChrootProvision struct {
 	ChrootKey string
 }
 
-func (s *StepChrootProvision) Run(state multistep.StateBag) multistep.StepAction {
+func (s *StepChrootProvision) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	hook := state.Get("hook").(packer.Hook)
 	mountPath := state.Get(s.ChrootKey).(string)
 	ui := state.Get("ui").(packer.Ui)
