@@ -45,10 +45,10 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 go get -u github.com/golang/dep/cmd/dep
 
 # Download and install packer
-wget https://releases.hashicorp.com/packer/1.1.3/packer_1.1.3_linux_amd64.zip \
-    -q -O /tmp/packer_1.1.3_linux_amd64.zip
+wget https://releases.hashicorp.com/packer/1.2.1/packer_1.2.1_linux_amd64.zip \
+    -q -O /tmp/packer_1.2.1_linux_amd64.zip
 pushd /tmp
-unzip packer_1.1.3_linux_amd64.zip
+unzip packer_1.2.1_linux_amd64.zip
 sudo cp packer /usr/local/bin
 popd
 
