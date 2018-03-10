@@ -24,14 +24,14 @@ type stepCopyImage struct {
 	ui                 packer.Ui
 }
 
-func (s *stepCopyImage) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
+func (s *stepCopyImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	fromFile := state.Get(s.FromKey).(string)
 	config := state.Get("config").(*Config)
 	s.ui = state.Get("ui").(packer.Ui)
 	s.ui.Say("Copying source image.")
 
 	dstfile := filepath.Join(config.OutputDir, "image")
-	err := s.copy(state, fromFile, config.OutputDir, "image")
+	err := s.copy(ctx, state, fromFile, config.OutputDir, "image")
 	if err != nil {
 		s.ui.Error(fmt.Sprintf("%v", err))
 		return multistep.ActionHalt
@@ -165,7 +165,7 @@ func (pw *ProgressWriter) Stop() {
 	atomic.StoreInt32(&pw.done, 1)
 }
 
-func (s *stepCopyImage) copy_progress(state multistep.StateBag, dst io.Writer, src io.Reader) error {
+func (s *stepCopyImage) copy_progress(ctx context.Context, state multistep.StateBag, dst io.Writer, src io.Reader) error {
 	ui := state.Get("ui").(packer.Ui)
 	l := NewProgressWriter()
 	rdr := io.TeeReader(src, l)
@@ -190,6 +190,9 @@ func (s *stepCopyImage) copy_progress(state multistep.StateBag, dst io.Writer, s
 			if progress >= 0 {
 				ui.Message(fmt.Sprintf("Copy speed: %7.2f MB/s", progress))
 			}
+		case <-ctx.Done():
+			l.Stop()
+			return errors.New("interrupted")
 		case <-time.After(1 * time.Second):
 			if _, ok := state.GetOk(multistep.StateCancelled); ok {
 				ui.Say("Interrupt received. Cancelling copy...")
@@ -200,7 +203,7 @@ func (s *stepCopyImage) copy_progress(state multistep.StateBag, dst io.Writer, s
 	}
 }
 
-func (s *stepCopyImage) copy(state multistep.StateBag, src, dir, filename string) error {
+func (s *stepCopyImage) copy(ctx context.Context, state multistep.StateBag, src, dir, filename string) error {
 
 	srcf, err := s.open(src)
 	if err != nil {
@@ -219,7 +222,7 @@ func (s *stepCopyImage) copy(state multistep.StateBag, src, dir, filename string
 	}
 	defer dstf.Close()
 
-	err = s.copy_progress(state, dstf, srcf)
+	err = s.copy_progress(ctx, state, dstf, srcf)
 
 	if err != nil {
 		return err
