@@ -1,11 +1,12 @@
 package builder
 
 import (
+	"context"
 	"fmt"
 	"os"
 
+	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
-	"github.com/mitchellh/multistep"
 	"github.com/rekby/mbr"
 )
 
@@ -16,7 +17,7 @@ type stepResizeLastPart struct {
 	FromKey string
 }
 
-func (s *stepResizeLastPart) Run(state multistep.StateBag) multistep.StepAction {
+func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	imagefile := state.Get(s.FromKey).(string)
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)

@@ -2,17 +2,18 @@ package builder
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
+	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
-	"github.com/mitchellh/multistep"
 )
 
 type stepResizeFs struct {
 	PartitionsKey string
 }
 
-func (s *stepResizeFs) Run(state multistep.StateBag) multistep.StepAction {
+func (s *stepResizeFs) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	wrappedCommand := state.Get("wrappedCommand").(CommandWrapper)
 
 	// Read our value and assert that it is they type we want

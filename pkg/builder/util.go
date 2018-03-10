@@ -6,7 +6,7 @@ import (
 
 	"github.com/hashicorp/packer/packer"
 
-	"github.com/mitchellh/multistep"
+	"github.com/hashicorp/packer/helper/multistep"
 )
 
 func run(state multistep.StateBag, cmds string) error {

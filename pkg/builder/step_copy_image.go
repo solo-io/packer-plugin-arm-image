@@ -2,14 +2,15 @@ package builder
 
 import (
 	"archive/zip"
+	"context"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 
+	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
-	"github.com/mitchellh/multistep"
 	filetype "gopkg.in/h2non/filetype.v1"
 	"gopkg.in/h2non/filetype.v1/matchers"
 
@@ -21,7 +22,7 @@ type stepCopyImage struct {
 	ui                 packer.Ui
 }
 
-func (s *stepCopyImage) Run(state multistep.StateBag) multistep.StepAction {
+func (s *stepCopyImage) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	fromFile := state.Get(s.FromKey).(string)
 	config := state.Get("config").(*Config)
 	s.ui = state.Get("ui").(packer.Ui)
