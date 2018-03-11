@@ -27,8 +27,6 @@ const (
 	BeagleBone  = "beaglebone"
 )
 
-const defaultType = RaspberryPi
-
 func init() {
 	knownTypes = make(map[string][]string)
 	knownArgs = make(map[string][]string)
@@ -43,10 +41,13 @@ type Config struct {
 	packer_common.ISOConfig    `mapstructure:",squash"`
 	CommandWrapper             string `mapstructure:"command_wrapper"`
 
-	OutputDir   string   `mapstructure:"output_directory"`
-	ImageType   string   `mapstructure:"image_type"`
+	OutputDir string `mapstructure:"output_directory"`
+	ImageType string `mapstructure:"image_type"`
+	// Where to mounts the image partitions in the chroot.
+	// first entry is thew mount point of the first partition. etc..
 	ImageMounts []string `mapstructure:"image_mounts"`
 
+	// What directories mount from the host to the chroot. leave it empty for reasonable deafults.
 	ChrootMounts [][]string `mapstructure:"chroot_mounts"`
 
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
@@ -128,9 +129,6 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	if b.config.ImageType == "" {
 		// defaults...
 		b.config.ImageType = b.autoDetectType()
-		if b.config.ImageType == "" {
-			b.config.ImageType = defaultType
-		}
 	} else {
 		if _, ok := knownTypes[b.config.ImageType]; !ok {
 
@@ -150,6 +148,10 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 		if len(b.config.QemuArgs) == 0 {
 			b.config.QemuArgs = knownArgs[b.config.ImageType]
 		}
+	}
+
+	if len(b.config.ImageMounts) == 0 {
+		errs = packer.MultiErrorAppend(errs, fmt.Errorf("no image mounts provided. Please set the image mounts or image type."))
 	}
 
 	if errs != nil && len(errs.Errors) > 0 {
