@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"sync/atomic"
 	"time"
@@ -97,6 +98,24 @@ func (s *stepCopyImage) openzip(f *os.File) (io.ReadCloser, error) {
 	return mc, nil
 }
 
+func (s *stepCopyImage) xzFastlane(f *os.File) (io.ReadCloser, error) {
+
+	xzcat := exec.Command("xzcat")
+	r, w := io.Pipe()
+
+	// fast path, use xzcat
+	xzcat.Stdin = f
+	xzcat.Stdout = w
+
+	if err := xzcat.Start(); err != nil {
+		return nil, err
+	}
+
+	//	mc := &multiCloser{r, []io.Closer{f}}
+	return r, nil
+
+}
+
 func (s *stepCopyImage) openxz(f *os.File) (io.ReadCloser, error) {
 	defer func() {
 		if f != nil {
@@ -104,6 +123,15 @@ func (s *stepCopyImage) openxz(f *os.File) (io.ReadCloser, error) {
 		}
 	}()
 
+	// check if available:
+	if exec.Command("which", "xzcat").Run() == nil {
+		ret, err := s.xzFastlane(f)
+		if err == nil {
+			f = nil
+			return ret, err
+		}
+	}
+	// slow lane here
 	r, err := xz.NewReader(f)
 	if err != nil {
 		return nil, err
