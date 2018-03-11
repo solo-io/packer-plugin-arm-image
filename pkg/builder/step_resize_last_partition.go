@@ -98,21 +98,6 @@ func (s *stepResizeLastPart) enlargeImage(state multistep.StateBag, imagefile st
 		return fmt.Errorf("can't stat file  %v", err)
 	}
 	return os.Truncate(imagefile, stat.Size()+extrata)
-
-	/*
-		imagefilef, err := os.OpenFile(imagefile, os.O_APPEND, 0)
-		if err != nil {
-			return fmt.Errorf("can't open file for append  %v", err)
-		}
-		defer imagefilef.Close()
-
-		written, err := io.CopyN(imagefilef, &zeroreader{}, extrata)
-
-		if err != nil {
-			return fmt.Errorf("can't copy zeros  %v %v", written, err)
-		}
-		return nil
-	*/
 }
 
 func (s *stepResizeLastPart) Cleanup(state multistep.StateBag) {
