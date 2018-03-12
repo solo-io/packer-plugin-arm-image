@@ -101,15 +101,21 @@ func (s *stepCopyImage) openzip(f *os.File) (io.ReadCloser, error) {
 func (s *stepCopyImage) xzFastlane(f *os.File) (io.ReadCloser, error) {
 
 	xzcat := exec.Command("xzcat")
-	r, w := io.Pipe()
 
 	// fast path, use xzcat
 	xzcat.Stdin = f
-	xzcat.Stdout = w
+	r, err := xzcat.StdoutPipe()
 
+	if err != nil {
+		return nil, err
+	}
 	if err := xzcat.Start(); err != nil {
 		return nil, err
 	}
+
+	go func() {
+		xzcat.Wait()
+	}()
 
 	//	mc := &multiCloser{r, []io.Closer{f}}
 	return r, nil
