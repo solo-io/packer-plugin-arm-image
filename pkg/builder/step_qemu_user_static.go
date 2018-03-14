@@ -13,7 +13,6 @@ import (
 	"github.com/hashicorp/packer/packer"
 )
 
-const qemyBinary = "/usr/bin/qemu-arm-static"
 const wrapped = "-wrapped"
 
 type Args struct {
@@ -22,7 +21,9 @@ type Args struct {
 }
 
 type stepQemuUserStatic struct {
-	ChrootKey   string
+	ChrootKey             string
+	PathToQemuInChrootKey string
+
 	Args        Args
 	destQemu    string
 	destWrapper string
@@ -54,11 +55,16 @@ int main(int argc, char **argv, char **envp) {
 func (s *stepQemuUserStatic) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	// Read our value and assert that it is they type we want
 	chrootDir := state.Get(s.ChrootKey).(string)
+	config := state.Get("config").(*Config)
+
 	ui := state.Get("ui").(packer.Ui)
-	ui.Say("Installing qemu-arm-static in the chroot")
-	srcqemu := qemyBinary
+	ui.Say("Installing qemu-user-static in the chroot")
+	srcqemu := config.QemuBinary
+	// TODO: maybe put qemu in the temporary dir in the root of the chroot? to guarantee
+	// existance of directory and easy cleanup
 	s.destQemu = filepath.Join(chrootDir, srcqemu)
 	s.Args.PathToQemuInChroot = srcqemu
+	state.Put(s.PathToQemuInChrootKey, s.Args.PathToQemuInChroot)
 
 	err := run(state, fmt.Sprintf("cp %s %s", srcqemu, s.destQemu))
 	if err != nil {

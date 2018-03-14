@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	packer_common "github.com/hashicorp/packer/common"
@@ -52,7 +53,9 @@ type Config struct {
 
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
 
-	QemuArgs []string `mapstructure:"qemu_args"`
+	// Qemu binary to use. default is qemu-arm-static
+	QemuBinary string   `mapstructure:"qemu_binary"`
+	QemuArgs   []string `mapstructure:"qemu_args"`
 
 	ctx interpolate.Context
 }
@@ -98,7 +101,7 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var errs *packer.MultiError
+	var errs error
 	var warnings []string
 	isoWarnings, isoErrs := b.config.ISOConfig.Prepare(&b.config.ctx)
 	warnings = append(warnings, isoWarnings...)
@@ -154,11 +157,21 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 		errs = packer.MultiErrorAppend(errs, fmt.Errorf("no image mounts provided. Please set the image mounts or image type."))
 	}
 
-	if errs != nil && len(errs.Errors) > 0 {
-		return warnings, errs
+	if b.config.QemuBinary == "" {
+		b.config.QemuBinary = "qemu-arm-static"
+	}
+	// convert to full path
+	path, err := exec.LookPath(b.config.QemuBinary)
+	if err != nil {
+		errs = packer.MultiErrorAppend(errs, fmt.Errorf("qemu binary not found."))
+	} else {
+		if !strings.Contains(path, "qemu-") {
+			warnings = append(warnings, "binary doesn't look like qemu-user")
+		}
+		b.config.QemuBinary = path
 	}
 
-	return warnings, nil
+	return warnings, errs
 }
 
 type wrappedCommandTemplate struct {
@@ -212,8 +225,8 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	steps = append(steps,
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path"},
 		&StepMountExtra{ChrootKey: "mount_path"},
-		&stepQemuUserStatic{ChrootKey: "mount_path", Args: Args{Args: b.config.QemuArgs}},
-		&stepRegisterBinFmt{},
+		&stepQemuUserStatic{ChrootKey: "mount_path", PathToQemuInChrootKey: "qemuInChroot", Args: Args{Args: b.config.QemuArgs}},
+		&stepRegisterBinFmt{QemuPathKey: "qemuInChroot"},
 		&StepChrootProvision{ChrootKey: "mount_path"},
 	)
 
