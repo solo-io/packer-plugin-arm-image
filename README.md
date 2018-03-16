@@ -34,6 +34,8 @@ To resize the filesystem, the following commands are used:
 - e2fsck
 - resize2fs
 
+To provide custom arguments to `qemu-arm-static` using the `qemu_args` config, `gcc` is required (to compile a C wrapper).
+
 Note: resizing is only supported for the last active
 partition in an MBR partition table (as there is no need to move things).
 
