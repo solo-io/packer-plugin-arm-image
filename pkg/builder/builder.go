@@ -112,7 +112,7 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	var errs error
+	var errs *packer.MultiError
 	var warnings []string
 	isoWarnings, isoErrs := b.config.ISOConfig.Prepare(&b.config.ctx)
 	warnings = append(warnings, isoWarnings...)
@@ -182,7 +182,10 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 		b.config.QemuBinary = path
 	}
 
-	return warnings, errs
+	if errs != nil && len(errs.Errors) > 0 {
+		return warnings, errs
+	}
+	return warnings, nil
 }
 
 type wrappedCommandTemplate struct {
