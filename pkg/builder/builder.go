@@ -15,9 +15,6 @@ import (
 	"github.com/hashicorp/packer/template/interpolate"
 )
 
-// TODO:
-// add resize image\partition ?
-
 const BuilderId = "yuval-k.arm-image"
 
 var knownTypes map[string][]string
@@ -39,23 +36,37 @@ func init() {
 
 type Config struct {
 	packer_common.PackerConfig `mapstructure:",squash"`
-	packer_common.ISOConfig    `mapstructure:",squash"`
-	CommandWrapper             string `mapstructure:"command_wrapper"`
+	// While arm image are not ISOs, we resuse the ISO logic as it basically has no ISO specific code.
+	// Provide the arm image in the iso_url fields.
+	packer_common.ISOConfig `mapstructure:",squash"`
 
+	// Lets you prefix all builder commands, such as with ssh for a remote build host. Defaults to "".
+	// Copied from other builders :)
+	CommandWrapper string `mapstructure:"command_wrapper"`
+
+	// Output directory, where the final image will be stored.
 	OutputDir string `mapstructure:"output_directory"`
+
+	// Image type. this is used to deduce other settings like image mounts and qemu args.
+	// If not provided, we will try to deduce it from the image url. (see autoDetectType())
 	ImageType string `mapstructure:"image_type"`
+
 	// Where to mounts the image partitions in the chroot.
-	// first entry is thew mount point of the first partition. etc..
+	// first entry is the mount point of the first partition. etc..
 	ImageMounts []string `mapstructure:"image_mounts"`
 
-	// What directories mount from the host to the chroot. leave it empty for reasonable deafults.
+	// What directories mount from the host to the chroot.
+	// leave it empty for reasonable deafults.
+	// array of triplets: [type, device, mntpoint].
 	ChrootMounts [][]string `mapstructure:"chroot_mounts"`
-
+	// Should the last partition be extended? this only works for the last partition in the
+	// dos partition table, and ext filesystem
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
 
 	// Qemu binary to use. default is qemu-arm-static
-	QemuBinary string   `mapstructure:"qemu_binary"`
-	QemuArgs   []string `mapstructure:"qemu_args"`
+	QemuBinary string `mapstructure:"qemu_binary"`
+	// Arguments to qemu binary. default depends on the image type. see init() function above.
+	QemuArgs []string `mapstructure:"qemu_args"`
 
 	ctx interpolate.Context
 }
