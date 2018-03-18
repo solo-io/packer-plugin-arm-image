@@ -9,8 +9,9 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"sync/atomic"
 	"time"
+
+	"github.com/solo-io/packer-builder-arm-image/pkg/utils"
 
 	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
@@ -164,46 +165,9 @@ func (n *multiCloser) Close() error {
 	return nil
 }
 
-type ProgressWriter struct {
-	done      int32
-	totalData uint64
-
-	lastProgressData uint64
-	lastProgressTime time.Time
-}
-
-func NewProgressWriter() *ProgressWriter {
-	return &ProgressWriter{
-		lastProgressTime: time.Now(),
-	}
-}
-func (pw *ProgressWriter) Write(data []byte) (int, error) {
-	if atomic.LoadInt32(&pw.done) != 0 {
-		return 0, errors.New("copy interrupted")
-	}
-	atomic.AddUint64(&pw.totalData, uint64(len(data)))
-	return len(data), nil
-}
-
-func (pw *ProgressWriter) Progress() float64 {
-	currentData := atomic.LoadUint64(&pw.totalData)
-	now := time.Now()
-	deltat := now.Sub(pw.lastProgressTime)
-	deltadata := currentData - pw.lastProgressData
-
-	pw.lastProgressData = currentData
-	pw.lastProgressTime = now
-	// TODO: is this the right way to measure? maybe change 1e6 to float64(1 << 20)?
-	return (float64(deltadata) / 1e6) / deltat.Seconds()
-}
-
-func (pw *ProgressWriter) Stop() {
-	atomic.StoreInt32(&pw.done, 1)
-}
-
 func (s *stepCopyImage) copy_progress(ctx context.Context, state multistep.StateBag, dst io.Writer, src io.Reader) error {
 	ui := state.Get("ui").(packer.Ui)
-	l := NewProgressWriter()
+	l := utils.NewProgressWriter()
 	rdr := io.TeeReader(src, l)
 
 	copyCompleteCh := make(chan error, 1)
@@ -223,8 +187,8 @@ func (s *stepCopyImage) copy_progress(ctx context.Context, state multistep.State
 			return err
 		case <-progressTicker.C:
 			progress := l.Progress()
-			if progress >= 0 {
-				ui.Message(fmt.Sprintf("Copy speed: %7.2f MB/s", progress))
+			if progress.MBytesPerSecond >= 0 {
+				ui.Message(fmt.Sprintf("Copy speed: %7.2f MB/s", progress.MBytesPerSecond))
 			}
 		case <-ctx.Done():
 			l.Stop()
