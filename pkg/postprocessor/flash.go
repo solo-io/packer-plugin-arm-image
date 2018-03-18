@@ -19,9 +19,9 @@ import (
 const BlockSize = 512
 
 type FlashConfig struct {
-	Device      string `mapstructure:"device"`
-	Interactive bool   `mapstructure:"interactive"`
-	Verify      bool   `mapstructure:"verify"`
+	Device         string `mapstructure:"device"`
+	NotInteractive bool   `mapstructure:"not_interactive"`
+	Verify         bool   `mapstructure:"verify"`
 }
 
 type Flasher struct {
@@ -56,7 +56,7 @@ func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artif
 	}
 
 	ui.Say(fmt.Sprintf("Going to flash to %s.", dev.Device))
-	if f.config.Interactive {
+	if !f.config.NotInteractive {
 		answer, err := ui.Ask("Are you sure?")
 		if err != nil {
 			return nil, false, err
@@ -172,7 +172,7 @@ func (f *Flasher) getDevice(ui packer.Ui) (*utils.Device, error) {
 		return nil, errors.New("configured device not found")
 	}
 
-	if !f.config.Interactive {
+	if f.config.NotInteractive {
 		if len(detachables) != 1 {
 			return nil, errors.New("ambiguous device")
 
