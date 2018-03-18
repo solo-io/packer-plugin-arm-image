@@ -28,7 +28,9 @@ type Flasher struct {
 	config FlashConfig
 }
 
-var _ packer.PostProcessor = &Flasher{}
+func NewFlasher() packer.PostProcessor {
+	return &Flasher{}
+}
 
 func (f *Flasher) Configure(cfgs ...interface{}) error {
 	err := config.Decode(&f.config, &config.DecodeOpts{
