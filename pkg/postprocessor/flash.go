@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/hashicorp/packer/helper/config"
@@ -75,6 +76,11 @@ func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artif
 	if err != nil {
 		return nil, false, err
 	}
+
+	//TODO: add verification
+
+	syscall.Sync()
+
 	return nil, false, nil
 
 }
