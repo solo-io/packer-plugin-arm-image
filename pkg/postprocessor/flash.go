@@ -44,25 +44,6 @@ func (f *Flasher) Configure(cfgs ...interface{}) error {
 }
 
 func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artifact, keep bool, err error) {
-	/*
-	   etcher algorithm:
-
-	   find removeable, not readonly devices with
-	   `lsblk -b -d --output NAME,SIZE,RO,RM,MODEL`
-	   for each of these find description in
-	   /sys/class/block/mmcblk0/device/name
-
-	   find mountpoint of device and partitions. if not found, find
-	   find uuids via
-	     /sbin/blkid -s UUID -o value "$1"
-	   find mounts points via /dev/disk/by-uuid and /proc/mounts
-
-	   use `udevadm info --query=property --name=/dev/mmcblk0` info to know if it is sdcard
-
-	   ummount everything
-	   flash sparsly(?)
-	   verify
-	*/
 	inputfiles := ain.Files()
 	if len(inputfiles) != 1 {
 		return nil, false, errors.New("ambigous images")
@@ -112,57 +93,6 @@ type WriterSeeker interface {
 	io.Seeker
 	io.Writer
 }
-
-/*
-func sparseCopy(out WriterSeeker, in io.Reader) error {
-	buffer := make([]byte, BlockSize)
-	for {
-
-		n, readerr := in.Read(buffer)
-
-		if n < len(buffer) {
-			// this shouldn't happen, but if we are at eof lets just zero the remainder
-			if readerr == io.EOF {
-				for i := range buffer[n:] {
-					buffer[i] = 0
-				}
-			} else {
-				errors.New("invalid read size")
-			}
-		}
-		if readerr != nil && readerr != io.EOF {
-			return readerr
-		}
-
-		if n > 0 {
-			allzeros := true
-			for i := range buffer[:n] {
-				if buffer[i] != 0 {
-					allzeros = false
-					break
-				}
-			}
-
-			if allzeros {
-				_, err := out.Seek(BlockSize, io.SeekCurrent)
-				if err != nil {
-					return err
-				}
-			} else {
-				_, err := out.Write(buffer)
-				if err != nil {
-					return err
-				}
-			}
-		}
-
-		if readerr == io.EOF {
-			return nil
-		}
-
-	}
-}
-*/
 
 func (f *Flasher) flash(ui packer.Ui, file string, device *utils.Device) error {
 	finfo, err := os.Stat(file)
