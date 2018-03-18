@@ -46,7 +46,7 @@ func (f *Flasher) Configure(cfgs ...interface{}) error {
 func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artifact, keep bool, err error) {
 	inputfiles := ain.Files()
 	if len(inputfiles) != 1 {
-		return nil, false, errors.New("ambigous images")
+		return nil, false, errors.New("ambiguous images")
 	}
 	imageToFlash := inputfiles[0]
 
@@ -55,8 +55,9 @@ func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artif
 		return nil, false, err
 	}
 
+	ui.Say(fmt.Sprintf("Going to flash to %s.", dev.Device))
 	if f.config.Interactive {
-		answer, err := ui.Ask(fmt.Sprintf("Going to flash to %s. Are you sure?", dev.Device))
+		answer, err := ui.Ask("Are you sure?")
 		if err != nil {
 			return nil, false, err
 		}
@@ -168,33 +169,33 @@ func (f *Flasher) getDevice(ui packer.Ui) (*utils.Device, error) {
 				return &d, nil
 			}
 		}
+		return nil, errors.New("configured device not found")
 	}
 
 	if !f.config.Interactive {
 		if len(detachables) != 1 {
-			return nil, errors.New("ambigous device")
+			return nil, errors.New("ambiguous device")
 
 		}
 		return &detachables[0], nil
-	} else {
-		question := "Which device should we choose?:\n"
-		for i, d := range detachables {
-			question += fmt.Sprint("%d. %s (%s)", i+1, d.Device, d.Name)
-		}
-		answer, err := ui.Ask(question)
-		if err != nil {
-			return nil, err
-		}
-		i, err := strconv.Atoi(answer)
-		if err != nil {
-			return nil, err
-		}
-		i = i - 1
-		if i < 0 || i > len(detachables) {
-			return nil, errors.New("invalid selection")
-		}
-		return &detachables[i], nil
 	}
 
-	return nil, errors.New("no device")
+	question := "Which device should we choose?:\n"
+	for i, d := range detachables {
+		question += fmt.Sprint("%d. %s (%s)", i+1, d.Device, d.Name)
+	}
+	answer, err := ui.Ask(question)
+	if err != nil {
+		return nil, err
+	}
+	i, err := strconv.Atoi(answer)
+	if err != nil {
+		return nil, err
+	}
+	i = i - 1
+	if i < 0 || i > len(detachables) {
+		return nil, errors.New("invalid selection")
+	}
+	return &detachables[i], nil
+
 }
