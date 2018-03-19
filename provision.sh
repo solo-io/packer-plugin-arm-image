@@ -59,7 +59,11 @@ if [[ "$RUNBUILDS" = true ]]; then {
     # Now ready to build the plugin
     mkdir -p $GOPATH/src/github.com/solo-io/
     pushd $GOPATH/src/github.com/solo-io/
-    cp -a /vagrant packer-builder-arm-image
+    if [[ -z "${GIT_CLONE_URL}" ]]; then {
+        cp -a /vagrant packer-builder-arm-image
+    } else {
+        git clone ${GIT_CLONE_URL} packer-builder-arm-image
+    }; fi
     pushd ./packer-builder-arm-image
     dep ensure
     go build
