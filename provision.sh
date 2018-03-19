@@ -49,7 +49,7 @@ go get -u github.com/golang/dep/cmd/dep
 wget https://releases.hashicorp.com/packer/1.2.1/packer_1.2.1_linux_amd64.zip \
     -q -O /tmp/packer_1.2.1_linux_amd64.zip
 pushd /tmp
-unzip packer_1.2.1_linux_amd64.zip
+unzip -u packer_1.2.1_linux_amd64.zip
 sudo cp packer /usr/local/bin
 popd
 
