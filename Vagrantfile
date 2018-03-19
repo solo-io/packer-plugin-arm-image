@@ -13,5 +13,5 @@ Vagrant.configure("2") do |config|
     vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
   end
   config.vm.synced_folder "./", "/vagrant", disabled: false
-  config.vm.provision "shell", :path => "provision.sh", privileged: false
+  config.vm.provision "shell", :path => "provision.sh", privileged: false, env: {"GIT_CLONE_URL" => ENV["GIT_CLONE_URL"]}
 end
