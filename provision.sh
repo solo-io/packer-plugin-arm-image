@@ -9,6 +9,7 @@
 set -x
 # Set to false to disable auto building
 export RUNBUILDS=true
+export PACKERFILE=${PACKERFILE:-example.json}
 
 # Update the system
 sudo apt-get update -qq
@@ -59,6 +60,8 @@ if [[ "$RUNBUILDS" = true ]]; then {
     # Now ready to build the plugin
     mkdir -p $GOPATH/src/github.com/solo-io/
     pushd $GOPATH/src/github.com/solo-io/
+    # clean up potential residual files from previous builds
+    rm -rf packer-builder-arm-image
     if [[ -z "${GIT_CLONE_URL}" ]]; then {
         cp -a /vagrant packer-builder-arm-image
     } else {
@@ -75,7 +78,6 @@ if [[ "$RUNBUILDS" = true ]]; then {
     } else {
         mkdir -p /home/vagrant/.packer.d/plugins
         cp packer-builder-arm-image /home/vagrant/.packer.d/plugins/
-        cp example.json /home/vagrant
         popd; popd
     }; fi
 
@@ -88,10 +90,15 @@ if [[ "$RUNBUILDS" = true ]]; then {
 
         # If there is a custom json, try that one
         # otherwise go with the default
-        if [[ -f /vagrant/example.json ]]; then {
-            sudo packer build /vagrant/example.json
+        if [[ -f /vagrant/${PACKERFILE} ]]; then {
+            sudo packer build /vagrant/${PACKERFILE}
         } else {
-            sudo packer build /home/vagrant/example.json
+            if [[ -f $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE} ]]; then {
+                sudo packer build $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE}
+            } else {
+                echo "Error: packer build definition ${PACKERFILE} not found."
+                exit
+            }; fi
         }; fi
 
         # If the new image is there, copy it out or throw an error
