@@ -21,23 +21,29 @@ if [[ ! -f /home/vagrant/.packer.d/plugins/packer-builder-arm-image ]]; then {
 } else {
     echo "Attempting to build image"
 
+    PACKER_LOG=$(mktemp)
+
     # If there is a custom json, try that one
     # otherwise go with the default
     if [[ -f /vagrant/${PACKERFILE} ]]; then {
-        sudo packer build /vagrant/${PACKERFILE}
+        sudo packer build /vagrant/${PACKERFILE} | tee ${PACKER_LOG}
     } else {
         if [[ -f $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE} ]]; then {
-            sudo packer build $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE}
+            sudo packer build $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE} | tee ${PACKER_LOG}
         } else {
             echo "Error: packer build definition ${PACKERFILE} not found."
             exit
         }; fi
     }; fi
 
+    BUILD_NAME=$(grep -Po "(?<=Build ').*(?=' finished.)" ${PACKER_LOG})
+    IMAGE_PATH=$(grep -Po "(?<=--> ${BUILD_NAME}: ).*" ${PACKER_LOG})
+    rm -f ${PACKER_LOG}
+
     # If the new image is there, copy it out or throw an error
-    if [[ -f /home/vagrant/output-arm-image/image ]]; then {
-        sudo cp /home/vagrant/output-arm-image/image \
-            /vagrant/raspbian-stretch-modified.img
+    if [[ -f /home/vagrant/${IMAGE_PATH} ]]; then {
+        sudo cp /home/vagrant/${IMAGE_PATH} \
+            /vagrant/${IMAGE_PATH%/image}.img
     } else {
         echo "Error: Unable to find build artifact."
         exit
