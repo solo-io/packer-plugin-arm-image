@@ -48,7 +48,7 @@ See [example.json](example.json) and [builder.go](pkg/builder/builder.go) for de
 
 # Compiling and Testing
 ## Building
-As this is an alpha release - consider using a vm to run this code for isolation.
+As this tool performs low-level OS manipulations - consider using a vm to run this code for isolation. While this is highly recommended, it is not manadatory.
 
 This project uses [go dep](https://github.com/golang/dep) tool for dependencies.
 To build:
@@ -61,41 +61,107 @@ dep ensure
 go build
 ```
 
-## Vagrant Test Environment
-This project includes a Vagrant file and helper script that build a VM test environment. The test environment attempts to automatically build the plugin and a packer build. To disable this behavior set ```RUNBUILDS = false``` in ```provision.sh```
+## Running with Vagrant
+This project includes a Vagrant file and helper script that build a VM runtime environment. The runtime environment has 
+custom provisions to build an image in an iterative fashion (thanks to @tommie-lie for adding this feature).
 
 To use the Vagrant environment, run the following commands:
 
 ```
 git clone https://github.com/solo-io/packer-builder-arm-image
 cd packer-builder-arm-image
-vagrant up && vagrant ssh
+vagrant up
 ```
 
-## Test VM
-Testing in a VM (vs directly on your laptop) is highly recommended, though not manadatory. To test in a VM:
-
-Download a linux machine. I personally used Ubuntu 17.10, but other versions \ distributions should work as well (as long as the shell commands use are similary. namely kpartx who's output is parsed)
-
-Then I used virt-install to help install it:
-```bash
-virt-install -n devel -r 4096 --disk path=$PWD/devel.img,bus=virtio,size=40 -c ~/Downloads/ubuntu-17.10-desktop-amd64.iso --network network=default,model=virtio
+To build an image edit example.json (or set PACKERFILE to point to your json config), and use `vagrant provision` like so :
 ```
-
-## Testing
-Once it is installed, you can build the plugin locally and copy it to the machine:
-```bash
-cd $GOPATH/src/github.com/solo-io/packer-builder-arm-image
-go build && scp packer-builder-arm-image example.json USER@IP-OF-VM:
+vagrant provision --provision-with build-image
 ```
-(note the colon after the ip of the vm)
-
-Then, [install packer](https://www.packer.io/docs/install/index.html) in the vm, the ssh to the vm and test:
-```
-ssh USER@IP-OF-VM
-sudo packer build -debug example.json
-```
-
 The example config produces an image with go installed and extends the filesystem by 1GB.
 
 That's it! Flash it and run!
+
+# Cookbook
+# Raspberry Pi
+
+(see full examples in contrib folder)
+Add these provisioners to:
+
+## Eanble ssh
+```json
+{
+  "type": "shell",
+  "inline": ["touch /boot/ssh"]
+}
+```
+## Set wifi password
+setet user variables name wifi_name and wifi_password. then:
+
+```json
+    {
+      "type": "shell",
+      "inline": [
+        "echo 'network={' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+        "echo '    ssid=\"{{user `wifi_name`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+        "echo '    psk=\"{{user `wifi_password`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+        "echo '}' >> /etc/wpa_supplicant/wpa_supplicant.conf"
+        ]
+    }
+```
+
+## Add ssh key to authorized keys, enable ssh, disable password login.
+This example locks down the image to only use your 
+current ssh key. Disabling password login makes it extra secure for networked environments. Note:
+this example requires you to run the plugin without a VM, as it copies your local ssh key.
+
+```json
+{
+  "variables": {
+    "ssh_key_src": "{{env `HOME`}}/.ssh/id_rsa.pub",
+    "image_home_dir": "/home/pi"
+  },
+  "builders": [
+    {
+    "type": "arm-image",
+    "iso_url" : "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-12-01/2017-11-29-raspbian-stretch-lite.zip",
+    "iso_checksum_type":"sha256",
+    "iso_checksum":"e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f",
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": [
+        "mkdir {{user `image_home_dir`}}/.ssh"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `ssh_key_src`}}",
+      "destination": "{{user `image_home_dir`}}/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "touch /boot/ssh"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/ssh_config",
+        "echo  >> /etc/ssh/ssh_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config"
+      ]
+    }
+  ]
+}
+```
+
+## A complete example:
+See everything included in here: [contrib/pi-secure-wifi-ssh.json](contrib/pi-secure-wifi-ssh.json). Build like so:
+```
+sudo packer build contrib/pi-secure-wifi-ssh.json -var wifi_name=SSID -var wifi_password=PASSWORD
+```
+
+
