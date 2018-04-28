@@ -80,6 +80,14 @@ vagrant provision --provision-with build-image
 The example config produces an image with go installed and extends the filesystem by 1GB.
 
 That's it! Flash it and run!
+# Flashing
+
+We have a post-processor stage for flashing. You can also use the command line:
+```
+go build cmd/flasher/main.go
+```
+
+It will auto-detect most things and guides you with questions.
 
 # Cookbook
 # Raspberry Pi
