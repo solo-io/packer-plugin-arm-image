@@ -70,7 +70,7 @@ func (f *flasher) Flash() error {
 
 	f.ui.Say(fmt.Sprintf("Going to flash to %s.", dev.Device))
 	if !f.config.NotInteractive {
-		answer, err := f.ui.Ask("Are you sure?")
+		answer, err := f.ui.Ask("Are you sure (type yes to continue)?")
 		if err != nil {
 			return err
 		}
@@ -88,13 +88,22 @@ func (f *flasher) Flash() error {
 	if err != nil {
 		return err
 	}
-
+	f.ui.Say("Syncing")
 	syscall.Sync()
+	f.ui.Say("Done syncing")
 
 	if len(res.Sum) != 0 {
-		f.verify(*res, dev)
-	}
 
+		f.ui.Say("Verifing")
+		err := f.verify(*res, dev)
+		if err != nil {
+			f.ui.Error("Verification failed!")
+			return err
+		}
+		f.ui.Say("Done verifing - all seems well!")
+
+	}
+	f.ui.Say("Done flashing!")
 	return nil
 }
 
