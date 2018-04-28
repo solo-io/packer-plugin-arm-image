@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 
@@ -23,10 +24,16 @@ func main() {
 		NotInteractive: !*interactive,
 		Verify:         *verify,
 	}
+	// Disable log output by UI
+	log.SetOutput(ioutil.Discard)
 	var ui packer.Ui = &packer.BasicUi{
 		Reader:      os.Stdin,
 		Writer:      os.Stdout,
 		ErrorWriter: os.Stdout,
+	}
+
+	if os.Geteuid() != 0 {
+		ui.Error("Warning: not running as root, this may fail.")
 	}
 
 	flshr := flasher.NewFlasher(ui, flashercfg)
