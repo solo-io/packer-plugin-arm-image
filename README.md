@@ -161,7 +161,9 @@ this example requires you to run the plugin without a VM, as it copies your loca
 ## A complete example:
 See everything included in here: [contrib/pi-secure-wifi-ssh.json](contrib/pi-secure-wifi-ssh.json). Build like so:
 ```
-sudo packer build contrib/pi-secure-wifi-ssh.json -var wifi_name=SSID -var wifi_password=PASSWORD
+sudo packer -var wifi_name=SSID -var wifi_password=PASSWORD build contrib/pi-secure-wifi-ssh.json
+# or  if running from vagrant ssh:
+sudo packer build  -var wifi_name=SSID  -var wifi_password=PASSWORD /vagrant/contrib/pi-secure-wifi-ssh.json
 ```
 
 
