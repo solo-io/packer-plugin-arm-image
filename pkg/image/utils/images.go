@@ -32,6 +32,12 @@ func GetImageFilesInCurrentDir() []string {
 		return nil
 	}
 
+	// optimisitic output dir for packer
+	outputFiles, err := ioutil.ReadDir("./output/")
+	if err == nil {
+		files = append(files, outputFiles...)
+	}
+
 	var potentialFiles []string
 
 	for _, file := range files {
@@ -44,5 +50,11 @@ func GetImageFilesInCurrentDir() []string {
 }
 
 func hasPotential(info os.FileInfo) bool {
-	return GuessImageType(info.Name()) != ""
+	if GuessImageType(info.Name()) != "" {
+		return true
+	}
+	if strings.HasSuffix(info.Name(), ".img") {
+		return true
+	}
+	return false
 }
