@@ -139,7 +139,7 @@ type LSBLKDevices struct {
 }
 
 func GetLSBLKDevices() (*LSBLKDevices, error) {
-	data, err := exec.Command("/sbin/lsblk", "-b", "--output", "NAME,SIZE,RO,RM,MODEL,UUID", "--json").Output()
+	data, err := exec.Command("lsblk", "-b", "--output", "NAME,SIZE,RO,RM,MODEL,UUID", "--json").Output()
 	if err != nil {
 		return nil, err
 	}

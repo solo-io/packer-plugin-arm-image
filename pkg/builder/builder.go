@@ -13,25 +13,23 @@ import (
 	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
 	"github.com/hashicorp/packer/template/interpolate"
+
+	"github.com/solo-io/packer-builder-arm-image/pkg/image"
+	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
 )
 
 const BuilderId = "yuval-k.arm-image"
 
-var knownTypes map[string][]string
-var knownArgs map[string][]string
-
-const (
-	RaspberryPi = "raspberrypi"
-	BeagleBone  = "beaglebone"
-)
+var knownTypes map[utils.KnownImageType][]string
+var knownArgs map[utils.KnownImageType][]string
 
 func init() {
-	knownTypes = make(map[string][]string)
-	knownArgs = make(map[string][]string)
-	knownTypes[RaspberryPi] = []string{"/boot", "/"}
-	knownTypes[BeagleBone] = []string{"/"}
+	knownTypes = make(map[utils.KnownImageType][]string)
+	knownArgs = make(map[utils.KnownImageType][]string)
+	knownTypes[utils.RaspberryPi] = []string{"/boot", "/"}
+	knownTypes[utils.BeagleBone] = []string{"/"}
 
-	knownArgs[BeagleBone] = []string{"-cpu", "cortex-a8"}
+	knownArgs[utils.BeagleBone] = []string{"-cpu", "cortex-a8"}
 }
 
 type Config struct {
@@ -49,7 +47,7 @@ type Config struct {
 
 	// Image type. this is used to deduce other settings like image mounts and qemu args.
 	// If not provided, we will try to deduce it from the image url. (see autoDetectType())
-	ImageType string `mapstructure:"image_type"`
+	ImageType utils.KnownImageType `mapstructure:"image_type"`
 
 	// Where to mounts the image partitions in the chroot.
 	// first entry is the mount point of the first partition. etc..
@@ -86,22 +84,12 @@ func NewBuilder() *Builder {
 	}
 }
 
-func (b *Builder) autoDetectType() string {
+func (b *Builder) autoDetectType() utils.KnownImageType {
 	if len(b.config.ISOUrls) < 1 {
 		return ""
 	}
 	url := b.config.ISOUrls[0]
-
-	if strings.Contains(url, "raspbian") {
-		return RaspberryPi
-	}
-
-	if strings.Contains(url, "bone") {
-		return BeagleBone
-	}
-
-	return ""
-
+	return utils.GuessImageType(url)
 }
 
 func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
@@ -146,7 +134,7 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	} else {
 		if _, ok := knownTypes[b.config.ImageType]; !ok {
 
-			var validvalues []string
+			var validvalues []utils.KnownImageType
 			for k := range knownTypes {
 				validvalues = append(validvalues, k)
 			}
@@ -218,7 +206,7 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 			Extension:    b.config.TargetExtension,
 			TargetPath:   b.config.TargetPath,
 		},
-		&stepCopyImage{FromKey: "iso_path", ResultKey: "imagefile"},
+		&stepCopyImage{FromKey: "iso_path", ResultKey: "imagefile", ImageOpener: image.NewImageOpener(ui)},
 	}
 
 	if b.config.LastPartitionExtraSize > 0 {

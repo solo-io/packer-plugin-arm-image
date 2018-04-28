@@ -40,8 +40,12 @@ type Progress struct {
 	PercentDone     float64
 }
 
+func (pw *ProgressWriter) TotalData() uint64 {
+	return atomic.LoadUint64(&pw.totalData)
+}
+
 func (pw *ProgressWriter) Progress() Progress {
-	currentData := atomic.LoadUint64(&pw.totalData)
+	currentData := pw.TotalData()
 	now := time.Now()
 	deltat := now.Sub(pw.lastProgressTime)
 	deltadata := currentData - pw.lastProgressData
