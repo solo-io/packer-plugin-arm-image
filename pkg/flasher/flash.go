@@ -60,6 +60,7 @@ func (f *flasher) Flash() error {
 	if err != nil {
 		return err
 	}
+
 	defer imageToFlash.Close()
 
 	dev, err := f.getDevice()
@@ -119,7 +120,7 @@ func (f *flasher) getSource() (image.Image, error) {
 	if err != nil {
 		return nil, err
 	}
-	f.ui.Say("using image " + chosen)
+	f.ui.Say("Using image: " + chosen)
 	return f.imageOpener.Open(chosen)
 }
 
@@ -151,9 +152,18 @@ func (f *flasher) Choose(files []string) (string, error) {
 		images += fmt.Sprintf("%d. %s\n", i+1, f)
 	}
 
-	answer, err := f.ui.Ask(images + "Which image should we use (type number)?")
+	defaultChoice, _ := f.getMostRecent(files)
+
+	answer, err := f.ui.Ask(images + "Which image should we use (type number)? [" + defaultChoice + "]")
 	if err != nil {
 		return "", err
+	}
+
+	if answer == "" {
+		if defaultChoice != "" {
+			return defaultChoice, nil
+		}
+		return "", errors.New("no answer provided")
 	}
 
 	index, err := strconv.Atoi(answer)
@@ -278,7 +288,7 @@ func (f *flasher) getDevice() (*utils.Device, error) {
 		return &detachables[0], nil
 	}
 
-	question := "Which device should we choose?:\n"
+	question := "Which device should we choose? [" + detachables[0].Device + "]\n"
 	for i, d := range detachables {
 		question += fmt.Sprintf("%d. %s (%s)\n", i+1, d.Device, d.Name)
 	}
@@ -286,6 +296,11 @@ func (f *flasher) getDevice() (*utils.Device, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if answer == "" {
+		return &detachables[0], nil
+	}
+
 	i, err := strconv.Atoi(answer)
 	if err != nil {
 		return nil, err
