@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -56,12 +57,21 @@ func ParseMountTable(data []byte) (*MountTable, error) {
 		}
 		mt.Entries = append(mt.Entries, MountEntry{
 			Device:     entries[0],
-			Mountpoint: entries[1],
+			Mountpoint: unescape(entries[1]),
 			Type:       entries[2],
 			Options:    entries[3],
 		})
 	}
 	return &mt, nil
+}
+
+func unescape(s string) string {
+	news, err := strconv.Unquote(`"` + s + `"`)
+	if err != nil {
+		//this should never happen
+		panic(err)
+	}
+	return news
 }
 
 type UdevAdm struct {

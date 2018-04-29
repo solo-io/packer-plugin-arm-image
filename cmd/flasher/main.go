@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -39,7 +40,7 @@ func main() {
 	flshr := flasher.NewFlasher(ui, flashercfg)
 	err := flshr.Flash()
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println("error:", err)
 	} else {
 		ui.Say("flashed successfully")
 	}
