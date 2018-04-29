@@ -56,5 +56,8 @@ func hasPotential(info os.FileInfo) bool {
 	if strings.HasSuffix(info.Name(), ".img") {
 		return true
 	}
+	if strings.HasSuffix(info.Name(), ".iso") {
+		return true
+	}
 	return false
 }
