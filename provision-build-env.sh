@@ -45,6 +45,7 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 go get -u github.com/golang/dep/cmd/dep
 
 # Download and install packer
+[[ -e /tmp/packer ]] && rm /tmp/packer
 wget https://releases.hashicorp.com/packer/1.2.4/packer_1.2.4_linux_amd64.zip \
     -q -O /tmp/packer_1.2.4_linux_amd64.zip
 pushd /tmp
