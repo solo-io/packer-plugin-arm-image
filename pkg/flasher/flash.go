@@ -75,7 +75,7 @@ func (f *flasher) Flash() error {
 			return err
 		}
 		answer = strings.TrimSpace(strings.ToLower(answer))
-		if !strings.HasPrefix("yes", answer) {
+		if !strings.HasPrefix(answer, "yes") {
 			return errors.New("canceled by user")
 		}
 	}

@@ -41,6 +41,7 @@ func main() {
 	err := flshr.Flash()
 	if err != nil {
 		fmt.Println("error:", err)
+		os.Exit(-1)
 	} else {
 		ui.Say("flashed successfully")
 	}
