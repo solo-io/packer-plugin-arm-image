@@ -1,4 +1,3 @@
 .vagrant/
 *.img
-vendor
 packer-builder-arm-image
