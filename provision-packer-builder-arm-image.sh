@@ -20,7 +20,6 @@ if [[ -z "${GIT_CLONE_URL}" ]]; then {
     git clone ${GIT_CLONE_URL} packer-builder-arm-image
 }; fi
 pushd ./packer-builder-arm-image
-dep ensure
 go build
 
 # Check if plugin built and copy into place
