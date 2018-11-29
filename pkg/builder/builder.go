@@ -28,7 +28,7 @@ func init() {
 	knownArgs = make(map[utils.KnownImageType][]string)
 	knownTypes[utils.RaspberryPi] = []string{"/boot", "/"}
 	knownTypes[utils.BeagleBone] = []string{"/"}
-
+	knownTypes[utils.Kali] = []string{"/root","/"}
 	knownArgs[utils.BeagleBone] = []string{"-cpu", "cortex-a8"}
 }
 
@@ -142,7 +142,6 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 			b.config.ImageType = ""
 		}
 	}
-
 	if b.config.ImageType != "" {
 		if len(b.config.ImageMounts) == 0 {
 			b.config.ImageMounts = knownTypes[b.config.ImageType]
