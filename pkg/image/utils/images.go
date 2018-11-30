@@ -11,6 +11,7 @@ type KnownImageType string
 const (
 	RaspberryPi KnownImageType = "raspberrypi"
 	BeagleBone  KnownImageType = "beaglebone"
+	Kali  KnownImageType = "kali"
 )
 
 func GuessImageType(url string) KnownImageType {
@@ -20,6 +21,10 @@ func GuessImageType(url string) KnownImageType {
 
 	if strings.Contains(url, "bone") {
 		return BeagleBone
+	}
+
+	if strings.Contains(url, "kali") {
+		return Kali
 	}
 
 	return ""
@@ -59,5 +64,9 @@ func hasPotential(info os.FileInfo) bool {
 	if strings.HasSuffix(info.Name(), ".iso") {
 		return true
 	}
+	if strings.HasSuffix(info.Name(), ".xz") {
+		return true
+	}
+
 	return false
 }
