@@ -50,14 +50,12 @@ See [example.json](example.json) and [builder.go](pkg/builder/builder.go) for de
 ## Building
 As this tool performs low-level OS manipulations - consider using a vm to run this code for isolation. While this is highly recommended, it is not manadatory.
 
-This project uses [go dep](https://github.com/golang/dep) tool for dependencies.
+This project uses [go modules](https://github.com/golang/go/wiki/Modules) for dependencies introduced in Go 1.11.
 To build:
 ```bash
-mkdir -p $GOPATH/src/github.com/solo-io/
-cd $GOPATH/src/github.com/solo-io/
 git clone https://github.com/solo-io/packer-builder-arm-image
 cd packer-builder-arm-image
-dep ensure
+go mod download
 go build
 ```
 
