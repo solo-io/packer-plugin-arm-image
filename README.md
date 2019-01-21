@@ -39,6 +39,12 @@ To provide custom arguments to `qemu-arm-static` using the `qemu_args` config, `
 Note: resizing is only supported for the last active
 partition in an MBR partition table (as there is no need to move things).
 
+This builder uses the following uses this kernel feature:
+- support for `/proc/sys/fs/binfmt_misc` so that ARM binaries are automatically executred with qemu
+
+## Operation
+This provisioner allows you to run packer provisioners on your ARM image locally. It does so by mounting the image on to the local file system, and then using `chroot` combined with `binfmt_misc` to the provisioners in a simulated ARM environment.
+
 # Configuration
 To use, you need to provide an existing image that we will then modify. We re-use packer's support 
 for downloading ISOs (though the image should not be an ISO file).
