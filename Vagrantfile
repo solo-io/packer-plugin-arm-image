@@ -10,7 +10,7 @@ Vagrant.configure("2") do |config|
     override.vm.box = "ubuntu/xenial64"
     # disable the generation of ubuntu-xenial-16.04-cloudimg-console.log file
     # https://betacloud.io/get-rid-of-ubuntu-xenial-16-04-cloudimg-console-log/
-    vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
+    #vb.customize [ "modifyvm", :id, "--uartmode1", "disconnected" ]
   end
   config.vm.synced_folder "./", "/vagrant", disabled: false
 
