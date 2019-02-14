@@ -10,13 +10,13 @@ With this plugin, you can:
 - Resize the last partition (the filesystem partition in the raspberry pi) in case you need more
   space than the default.
 
-Tested for raspbian images on built on Ubuntu 17.10. It is based partly on the chroot aws 
-provisioner, though the code was copied to prevent aws dependenceies.
+Tested for Raspbian images on built on Ubuntu 17.10. It is based partly on the chroot AWS 
+provisioner, though the code was copied to prevent AWS dependencies.
 
 # How it works?
 
-The plugin runs the provisioners in a chroot envrionment. binary execution is done using
-qemu-arm-static, via binfmt_misc.
+The plugin runs the provisioners in a chroot environment.  Binary execution is done using
+`qemu-arm-static`, via `binfmt_misc`.
 
 
 ## Dependencies:
@@ -24,10 +24,12 @@ This builder uses the following shell commands:
 - kpartx - mapping the partitons to mountable devices
 - qemu-user-static - Executing arm binaries
 
-To install the needed binaries:
+To install the needed binaries on derivatives of the Debian Linux variant:
+
 ```
 sudo apt install kpartx qemu-user-static
 ```
+
 Other commands that are used are (that should already be installed) : mount, umount, cp, ls, chroot.
 
 To resize the filesystem, the following commands are used:
@@ -54,7 +56,7 @@ See [example.json](example.json) and [builder.go](pkg/builder/builder.go) for de
 
 # Compiling and Testing
 ## Building
-As this tool performs low-level OS manipulations - consider using a vm to run this code for isolation. While this is highly recommended, it is not manadatory.
+As this tool performs low-level OS manipulations - consider using a VM to run this code for isolation. While this is highly recommended, it is not mandatory.
 
 This project uses [go modules](https://github.com/golang/go/wiki/Modules) for dependencies introduced in Go 1.11.
 To build:
@@ -66,7 +68,7 @@ go build
 ```
 
 ## Running with Vagrant
-This project includes a Vagrant file and helper script that build a VM runtime environment. The runtime environment has 
+This project includes a Vagrant file and helper script that build a VM run time environment. The run time environment has 
 custom provisions to build an image in an iterative fashion (thanks to @tommie-lie for adding this feature).
 
 To use the Vagrant environment, run the following commands:
@@ -99,15 +101,15 @@ It will auto-detect most things and guides you with questions.
 (see full examples in contrib folder)
 Add these provisioners to:
 
-## Eanble ssh
+## Enable ssh
 ```json
 {
   "type": "shell",
   "inline": ["touch /boot/ssh"]
 }
 ```
-## Set wifi password
-setet user variables name wifi_name and wifi_password. then:
+## Set WiFi password
+set the user variables name `wifi_name` and `wifi_password`. then:
 
 ```json
     {
@@ -173,9 +175,9 @@ this example requires you to run the plugin without a VM, as it copies your loca
 ## A complete example:
 See everything included in here: [contrib/pi-secure-wifi-ssh.json](contrib/pi-secure-wifi-ssh.json). Build like so:
 ```
-sudo packer -var wifi_name=SSID -var wifi_password=PASSWORD build contrib/pi-secure-wifi-ssh.json
+sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD contrib/pi-secure-wifi-ssh.json
 # or  if running from vagrant ssh:
-sudo packer build  -var wifi_name=SSID  -var wifi_password=PASSWORD /vagrant/contrib/pi-secure-wifi-ssh.json
+sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD /vagrant/contrib/pi-secure-wifi-ssh.json
 ```
 
 
