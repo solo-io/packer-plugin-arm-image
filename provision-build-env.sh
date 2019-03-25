@@ -46,9 +46,9 @@ go get -u github.com/golang/dep/cmd/dep
 
 # Download and install packer
 [[ -e /tmp/packer ]] && rm /tmp/packer
-wget https://releases.hashicorp.com/packer/1.2.4/packer_1.2.4_linux_amd64.zip \
-    -q -O /tmp/packer_1.2.4_linux_amd64.zip
+wget https://releases.hashicorp.com/packer/1.3.5/packer_1.3.5_linux_amd64.zip \
+    -q -O /tmp/packer_1.3.5_linux_amd64.zip
 pushd /tmp
-unzip -u packer_1.2.4_linux_amd64.zip
+unzip -u packer_1.3.5_linux_amd64.zip
 sudo cp packer /usr/local/bin
 popd
