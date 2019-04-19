@@ -51,6 +51,9 @@ func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multis
 	sort.Slice(mountsAndPartitions, func(i, j int) bool { return mountsAndPartitions[i].mnt < mountsAndPartitions[j].mnt })
 
 	for _, mntAndPart := range mountsAndPartitions {
+		if mntAndPart.mnt == "" {
+			continue
+		}
 
 		mntpnt := filepath.Join(s.tempdir, mntAndPart.mnt)
 
