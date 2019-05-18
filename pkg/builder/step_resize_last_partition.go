@@ -21,29 +21,43 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 	imagefile := state.Get(s.FromKey).(string)
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
-	extrata := config.LastPartitionExtraSize
+	targetSize := config.TargetImageSize
+	extrata := config.LastPartitionExtraSize // legacy way to specify extension
 
-	ui.Say(fmt.Sprintf("Resizing the last partition %v.", extrata))
-
-	if extrata == 0 {
+	if extrata == 0 && targetSize == 0 {
 		return multistep.ActionContinue
 	}
 
+	stat, err := os.Stat(imagefile)
+	if err != nil {
+		ui.Error(fmt.Sprintf("Cannot stat() image file: %v", err))
+		return multistep.ActionHalt
+	}
+
+	if targetSize > 0 && targetSize < uint64(stat.Size()) {
+		ui.Error(fmt.Sprintf("target_image_size (%v) is smaller than actual image size (%v). Cannot shrink image.",
+			targetSize, stat.Size()))
+		return multistep.ActionHalt
+	}
+	if targetSize > 0 && extrata > 0 {
+		ui.Say("both last_partition_extra_size and target_image_size was specified - ignoring last_partition_extra_size")
+		extrata = uint64(stat.Size()) - targetSize
+	}
+
+	ui.Say("Resizing the last partition.")
+	err = os.Truncate(imagefile, int64(extrata)+stat.Size())
 	// resizer image
-	err := s.enlargeImage(state, imagefile, int64(extrata))
 	if err != nil {
 		ui.Error(fmt.Sprintf("Error enlarging image file %v", err))
 		return multistep.ActionHalt
 	}
 
 	// resize the last partition
-
 	mbrp, err := s.getMbr(imagefile)
 	if err != nil {
 		ui.Error(fmt.Sprintf("Error retreiving mbr %v", err))
 		return multistep.ActionHalt
 	}
-	extrasector := extrata >> SectorShift
 	partitions := mbrp.GetAllPartitions()
 
 	if len(partitions) == 0 {
@@ -62,7 +76,8 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 		ui.Error(fmt.Sprintf("no partition %v", *mbrp))
 		return multistep.ActionHalt
 	}
-	part.SetLBALen(part.GetLBALen() + uint32(extrasector))
+	extrasector := uint32(extrata >> SectorShift)
+	part.SetLBALen(part.GetLBALen() + extrasector)
 
 	f, err := os.OpenFile(imagefile, os.O_RDWR|os.O_SYNC, 0600)
 	if err != nil {
@@ -90,14 +105,6 @@ func (s *stepResizeLastPart) getMbr(imagefile string) (*mbr.MBR, error) {
 
 	return mbr.Read(disk)
 
-}
-
-func (s *stepResizeLastPart) enlargeImage(state multistep.StateBag, imagefile string, extrata int64) error {
-	stat, err := os.Stat(imagefile)
-	if err != nil {
-		return fmt.Errorf("can't stat file  %v", err)
-	}
-	return os.Truncate(imagefile, stat.Size()+extrata)
 }
 
 func (s *stepResizeLastPart) Cleanup(state multistep.StateBag) {

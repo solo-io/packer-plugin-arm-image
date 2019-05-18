@@ -28,7 +28,7 @@ func init() {
 	knownArgs = make(map[utils.KnownImageType][]string)
 	knownTypes[utils.RaspberryPi] = []string{"/boot", "/"}
 	knownTypes[utils.BeagleBone] = []string{"/"}
-	knownTypes[utils.Kali] = []string{"/root","/"}
+	knownTypes[utils.Kali] = []string{"/root", "/"}
 	knownArgs[utils.BeagleBone] = []string{"-cpu", "cortex-a8"}
 }
 
@@ -60,6 +60,10 @@ type Config struct {
 	// Should the last partition be extended? this only works for the last partition in the
 	// dos partition table, and ext filesystem
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
+	// The target size of the final image. The last partiation will be extended to
+	// fill up this much room. I.e. if the generated image is 256MB and TargetImageSize
+	// is set to 384MB the last partition will be extended with an additional 128MB.
+	TargetImageSize uint64 `mapstructure:"target_image_size"`
 
 	// Qemu binary to use. default is qemu-arm-static
 	QemuBinary string `mapstructure:"qemu_binary"`
