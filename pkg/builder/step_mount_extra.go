@@ -75,6 +75,11 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		return nil
 	}
 
+	mountPath := state.Get(s.ChrootKey).(string)
+	ui := state.Get("ui").(packer.Ui)
+        ui.Say("fuser -k " + mountPath)
+        run(state, "fuser -k " + mountPath + " || exit 0")
+
 	wrappedCommand := state.Get("wrappedCommand").(CommandWrapper)
 	for len(s.mounts) > 0 {
 		var path string

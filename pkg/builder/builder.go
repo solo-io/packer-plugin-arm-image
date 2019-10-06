@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"runtime"
 
 	packer_common "github.com/hashicorp/packer/common"
 	"github.com/hashicorp/packer/helper/config"
@@ -230,8 +231,17 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	steps = append(steps,
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path"},
 		&StepMountExtra{ChrootKey: "mount_path"},
-		&stepQemuUserStatic{ChrootKey: "mount_path", PathToQemuInChrootKey: "qemuInChroot", Args: Args{Args: b.config.QemuArgs}},
-		&stepRegisterBinFmt{QemuPathKey: "qemuInChroot"},
+	)
+
+	native := runtime.GOARCH == "arm" || runtime.GOARCH == "arm64"
+	if !native {
+		steps = append(steps,
+			&stepQemuUserStatic{ChrootKey: "mount_path", PathToQemuInChrootKey: "qemuInChroot", Args: Args{Args: b.config.QemuArgs}},
+			&stepRegisterBinFmt{QemuPathKey: "qemuInChroot"},
+		)
+	}
+
+	steps = append(steps,
 		&StepChrootProvision{ChrootKey: "mount_path"},
 	)
 
