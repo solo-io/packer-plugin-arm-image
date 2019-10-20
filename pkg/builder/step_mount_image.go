@@ -15,7 +15,7 @@ import (
 type stepMountImage struct {
 	PartitionsKey string
 	ResultKey     string
-	tempdir       string
+	MountPath     string
 	mountpoints   []string
 }
 
@@ -33,12 +33,20 @@ func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multis
 		return multistep.ActionHalt
 	}
 
-	tempdir, err := ioutil.TempDir("", "")
-	if err != nil {
-		ui.Error(err.Error())
-		return multistep.ActionHalt
+	if len(s.MountPath) > 0 {
+		err := os.MkdirAll(s.MountPath, os.ModePerm)
+		if err != nil {
+			ui.Error(err.Error())
+			return multistep.ActionHalt
+		}
+	} else {
+		tempDir, err := ioutil.TempDir("", "")
+		if err != nil {
+			ui.Error(err.Error())
+			return multistep.ActionHalt
+		}
+		s.MountPath = tempDir
 	}
-	s.tempdir = tempdir
 
 	mountsAndPartitions := make([]struct{ part, mnt string }, len(partitions))
 	for i := range partitions {
@@ -55,7 +63,7 @@ func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multis
 			continue
 		}
 
-		mntpnt := filepath.Join(s.tempdir, mntAndPart.mnt)
+		mntpnt := filepath.Join(s.MountPath, mntAndPart.mnt)
 
 		ui.Message(fmt.Sprintf("Mounting: %s", mntAndPart.part))
 
@@ -69,25 +77,25 @@ func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multis
 		s.mountpoints = append(s.mountpoints, mntpnt)
 	}
 
-	state.Put(s.ResultKey, tempdir)
+	state.Put(s.ResultKey, s.MountPath)
 	return multistep.ActionContinue
 }
 
 func (s *stepMountImage) Cleanup(state multistep.StateBag) {
 	ui := state.Get("ui").(packer.Ui)
 
-	if s.tempdir != "" {
+	if s.MountPath != "" {
 		for _, mntpnt := range reverse(s.mountpoints) {
 			run(state, "umount "+mntpnt)
 		}
 		s.mountpoints = nil
 		// DO NOT do remove all here! if dev fails to umount it would be undesirable.
-		err := os.Remove(s.tempdir)
+		err := os.Remove(s.MountPath)
 		if err != nil {
 			ui.Error(err.Error())
 		}
 
-		s.tempdir = ""
+		s.MountPath = ""
 	}
 }
 

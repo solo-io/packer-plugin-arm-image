@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"strings"
 	"runtime"
+	"strings"
 
 	packer_common "github.com/hashicorp/packer/common"
 	"github.com/hashicorp/packer/helper/config"
@@ -53,6 +53,10 @@ type Config struct {
 	// Where to mounts the image partitions in the chroot.
 	// first entry is the mount point of the first partition. etc..
 	ImageMounts []string `mapstructure:"image_mounts"`
+
+	// The path where the volume will be mounted. This is where the chroot environment will be.
+	// Will be a temporary directory if left unspecified.
+	MountPath string `mapstructure:"mount_path"`
 
 	// What directories mount from the host to the chroot.
 	// leave it empty for reasonable deafults.
@@ -229,7 +233,7 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	steps = append(steps,
-		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path"},
+		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path", MountPath: b.config.MountPath},
 		&StepMountExtra{ChrootKey: "mount_path"},
 	)
 
