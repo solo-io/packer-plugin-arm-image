@@ -52,7 +52,7 @@ To use, you need to provide an existing image that we will then modify. We re-us
 for downloading ISOs (though the image should not be an ISO file).
 Supporting also zipped images (enabling you downloading official raspbian images directly).
 
-See [example.json](example.json) and [builder.go](pkg/builder/builder.go) for details.
+See [raspbian_golang.json](samples/raspbian_golang.json) and [builder.go](pkg/builder/builder.go) for details.
 
 # Compiling and Testing
 ## Building
@@ -79,13 +79,14 @@ cd packer-builder-arm-image
 vagrant up
 ```
 
-To build an image edit example.json (or set PACKERFILE to point to your json config), and use `vagrant provision` like so :
+To build an image edit [samples/raspbian_golang.json](samples/raspbian_golang.json) (or set `PACKERFILE` to point to your json config), and use `vagrant provision` like so:
 ```
 vagrant provision --provision-with build-image
 ```
 The example config produces an image with go installed and extends the filesystem by 1GB.
 
 That's it! Flash it and run!
+
 # Flashing
 
 We have a post-processor stage for flashing. You can also use the command line:
@@ -112,15 +113,15 @@ Add these provisioners to:
 set the user variables name `wifi_name` and `wifi_password`. then:
 
 ```json
-    {
-      "type": "shell",
-      "inline": [
-        "echo 'network={' >> /etc/wpa_supplicant/wpa_supplicant.conf",
-        "echo '    ssid=\"{{user `wifi_name`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
-        "echo '    psk=\"{{user `wifi_password`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
-        "echo '}' >> /etc/wpa_supplicant/wpa_supplicant.conf"
-        ]
-    }
+{
+  "type": "shell",
+  "inline": [
+    "echo 'network={' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+    "echo '    ssid=\"{{user `wifi_name`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+    "echo '    psk=\"{{user `wifi_password`}}\"' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+    "echo '}' >> /etc/wpa_supplicant/wpa_supplicant.conf"
+    ]
+}
 ```
 
 ## Add ssh key to authorized keys, enable ssh, disable password login.
@@ -136,10 +137,10 @@ this example requires you to run the plugin without a VM, as it copies your loca
   },
   "builders": [
     {
-    "type": "arm-image",
-    "iso_url" : "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-12-01/2017-11-29-raspbian-stretch-lite.zip",
-    "iso_checksum_type":"sha256",
-    "iso_checksum":"e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f",
+      "type": "arm-image",
+      "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-12-01/2017-11-29-raspbian-stretch-lite.zip",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f"
     }
   ],
   "provisioners": [

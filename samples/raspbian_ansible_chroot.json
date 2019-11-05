@@ -1,0 +1,22 @@
+{
+  "variables": {
+    "img_mount_path": "/mnt/raspbian"
+  },
+  "builders": [
+    {
+      "type": "arm-image",
+      "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2019-09-30/2019-09-26-raspbian-buster-lite.zip",
+      "iso_checksum_type": "sha256",
+      "iso_checksum": "a50237c2f718bd8d806b96df5b9d2174ce8b789eda1f03434ed2213bbca6c6ff",
+      "mount_path": "{{ user `img_mount_path` }}"
+    }
+  ],
+  "provisioners": [
+    {
+      "type": "shell-local",
+      "inline": [
+        "sudo -E ANSIBLE_FORCE_COLOR=1 PYTHONUNBUFFERED=1 ansible-playbook -i '{{ user `img_mount_path` }}', -v -c chroot /vagrant/samples/raspbian_ansible_chroot.yml"
+      ]
+    }
+  ]
+}
