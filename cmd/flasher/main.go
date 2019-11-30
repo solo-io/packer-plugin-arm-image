@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -38,7 +39,7 @@ func main() {
 	}
 
 	flshr := flasher.NewFlasher(ui, flashercfg)
-	err := flshr.Flash()
+	err := flshr.Flash(context.Background())
 	if err != nil {
 		fmt.Println("error:", err)
 		os.Exit(-1)
