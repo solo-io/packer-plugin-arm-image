@@ -13,7 +13,7 @@ type stepResizeFs struct {
 	PartitionsKey string
 }
 
-func (s *stepResizeFs) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
+func (s *stepResizeFs) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	wrappedCommand := state.Get("wrappedCommand").(CommandWrapper)
 
 	// Read our value and assert that it is they type we want
@@ -22,7 +22,7 @@ func (s *stepResizeFs) Run(_ context.Context, state multistep.StateBag) multiste
 	ui.Say(fmt.Sprintf("partitions: %v", partitions))
 
 	p := partitions[len(partitions)-1]
-	err := s.e2fsck(wrappedCommand, p)
+	err := s.e2fsck(ctx, wrappedCommand, p)
 	if err != nil {
 		err := fmt.Errorf("Error e2fsck command: %s", err)
 		state.Put("error", err)
@@ -30,7 +30,7 @@ func (s *stepResizeFs) Run(_ context.Context, state multistep.StateBag) multiste
 		return multistep.ActionHalt
 	}
 
-	err = s.resize(wrappedCommand, p)
+	err = s.resize(ctx, wrappedCommand, p)
 
 	if err != nil {
 		err := fmt.Errorf("Error creating resize command: %s", err)
@@ -42,13 +42,13 @@ func (s *stepResizeFs) Run(_ context.Context, state multistep.StateBag) multiste
 	return multistep.ActionContinue
 }
 
-func (s *stepResizeFs) e2fsck(wrappedCommand CommandWrapper, dev string) error {
+func (s *stepResizeFs) e2fsck(ctx context.Context, wrappedCommand CommandWrapper, dev string) error {
 	e2fsckCommand, err := wrappedCommand(fmt.Sprintf("e2fsck -y -f %s", dev))
 	if err != nil {
 		return err
 	}
 
-	cmd := ShellCommand(e2fsckCommand)
+	cmd := ShellCommand(ctx, e2fsckCommand)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -59,14 +59,14 @@ func (s *stepResizeFs) e2fsck(wrappedCommand CommandWrapper, dev string) error {
 	return nil
 }
 
-func (s *stepResizeFs) resize(wrappedCommand CommandWrapper, dev string) error {
+func (s *stepResizeFs) resize(ctx context.Context, wrappedCommand CommandWrapper, dev string) error {
 
 	reizeCommand, err := wrappedCommand(fmt.Sprintf("resize2fs %s", dev))
 	if err != nil {
 		return err
 	}
 
-	cmd := ShellCommand(reizeCommand)
+	cmd := ShellCommand(ctx, reizeCommand)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

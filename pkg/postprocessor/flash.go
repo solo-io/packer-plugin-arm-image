@@ -1,6 +1,7 @@
 package postprocessor
 
 import (
+	"context"
 	"errors"
 
 	"github.com/hashicorp/packer/helper/config"
@@ -34,10 +35,10 @@ func (f *Flasher) Configure(cfgs ...interface{}) error {
 	return nil
 }
 
-func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artifact, keep bool, err error) {
+func (f *Flasher) PostProcess(ctx context.Context, ui packer.Ui, ain packer.Artifact) (a packer.Artifact, keep bool, forceOverride bool, err error) {
 	inputfiles := ain.Files()
 	if len(inputfiles) != 1 {
-		return nil, false, errors.New("ambiguous images")
+		return nil, false, false, errors.New("ambiguous images")
 	}
 	imageToFlash := inputfiles[0]
 
@@ -48,6 +49,6 @@ func (f *Flasher) PostProcess(ui packer.Ui, ain packer.Artifact) (a packer.Artif
 		Verify:         f.config.Verify,
 	}
 	flasher := flasher.NewFlasher(ui, flashercfg)
-	return nil, false, flasher.Flash()
+	return nil, false, false, flasher.Flash(ctx)
 
 }

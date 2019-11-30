@@ -36,6 +36,10 @@ func (*nilUi) Machine(string, ...string) {
 
 }
 
+func (*nilUi) TrackProgress(src string, currentSize, totalSize int64, stream io.ReadCloser) io.ReadCloser {
+	return stream
+}
+
 func NewImageOpener(ui packer.Ui) ImageOpener {
 	if ui == nil {
 		ui = &nilUi{}

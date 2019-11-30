@@ -33,7 +33,7 @@ type FlashConfig struct {
 }
 
 type Flasher interface {
-	Flash() error
+	Flash(ctx context.Context) error
 	// Verify() error
 }
 
@@ -54,7 +54,7 @@ func NewFlasher(ui packer.Ui, cfg FlashConfig) Flasher {
 	return &flasher{config: cfg, ui: ui, imageOpener: image.NewImageOpener(ui)}
 }
 
-func (f *flasher) Flash() error {
+func (f *flasher) Flash(ctx context.Context) error {
 
 	imageToFlash, err := f.getSource()
 	if err != nil {
@@ -84,7 +84,7 @@ func (f *flasher) Flash() error {
 	if err != nil {
 		return err
 	}
-	res, err := f.flash(imageToFlash, dev)
+	res, err := f.flash(ctx, imageToFlash, dev)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func (f *flasher) Flash() error {
 	if len(res.Sum) != 0 {
 
 		f.ui.Say("Verifing")
-		err := f.verify(*res, dev)
+		err := f.verify(ctx, *res, dev)
 		if err != nil {
 			f.ui.Error("Verification failed!")
 			return err
@@ -211,7 +211,7 @@ type WriterSeeker interface {
 	io.Writer
 }
 
-func (f *flasher) flash(input image.Image, device *utils.Device) (*FlashResult, error) {
+func (f *flasher) flash(ctx context.Context, input image.Image, device *utils.Device) (*FlashResult, error) {
 
 	defer input.Close()
 	output, err := os.OpenFile(device.Device, os.O_RDWR, 0)
@@ -219,9 +219,6 @@ func (f *flasher) flash(input image.Image, device *utils.Device) (*FlashResult, 
 		return nil, err
 	}
 	defer output.Close()
-
-	// TODO : support signals
-	ctx := context.Background()
 
 	var checksummer hash.Hash
 	var outputWriter io.Writer = output
@@ -241,7 +238,7 @@ func (f *flasher) flash(input image.Image, device *utils.Device) (*FlashResult, 
 	return &res, nil
 }
 
-func (f *flasher) verify(res FlashResult, dev *utils.Device) error {
+func (f *flasher) verify(ctx context.Context, res FlashResult, dev *utils.Device) error {
 
 	input, err := os.OpenFile(dev.Device, os.O_RDWR, 0)
 	if err != nil {
@@ -255,8 +252,6 @@ func (f *flasher) verify(res FlashResult, dev *utils.Device) error {
 		N: int64(res.BytesWritten),
 	}
 
-	// TODO : support signals
-	ctx := context.Background()
 	_, err = utils.CopyWithProgress(ctx, f.ui, checksummer, limitedInput)
 
 	if err != nil {

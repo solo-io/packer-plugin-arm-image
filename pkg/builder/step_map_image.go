@@ -41,14 +41,14 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 	// get the loopback device for the partitions
 	// kpartx -l output looks like this:
 	/*
-	loop2p1 : 0 85045 /dev/loop2 8192
-	loop2p2 : 0 3534848 /dev/loop2 94208
+		loop2p1 : 0 85045 /dev/loop2 8192
+		loop2p2 : 0 3534848 /dev/loop2 94208
 	*/
 	/*
-	  kpartx -a -v output looks like this:
+		  kpartx -a -v output looks like this:
 
-		add map loop20p1 (254:22): 0 88262 linear 7:20 8192
-		add map loop20p2 (254:23): 0 3538944 linear 7:20 98304
+			add map loop20p1 (254:22): 0 88262 linear 7:20 8192
+			add map loop20p2 (254:23): 0 3538944 linear 7:20 98304
 	*/
 	lines := strings.Split(string(out), "\n")
 
@@ -74,5 +74,5 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 
 func (s *stepMapImage) Cleanup(state multistep.StateBag) {
 	image := state.Get(s.ImageKey).(string)
-	run(state, fmt.Sprintf("kpartx -d %s", image))
+	run(context.TODO(), state, fmt.Sprintf("kpartx -d %s", image))
 }

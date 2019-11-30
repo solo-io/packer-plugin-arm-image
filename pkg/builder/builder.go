@@ -79,18 +79,12 @@ type Config struct {
 }
 
 type Builder struct {
-	config  Config
-	runner  *multistep.BasicRunner
-	context context.Context
-	cancel  context.CancelFunc
+	config Config
+	runner *multistep.BasicRunner
 }
 
 func NewBuilder() *Builder {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &Builder{
-		context: ctx,
-		cancel:  cancel,
-	}
+	return &Builder{}
 }
 
 func (b *Builder) autoDetectType() utils.KnownImageType {
@@ -188,7 +182,7 @@ type wrappedCommandTemplate struct {
 	Command string
 }
 
-func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packer.Artifact, error) {
+func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
 
 	wrappedCommand := func(command string) (string, error) {
 		ctx := b.config.ctx
@@ -197,7 +191,6 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	state := new(multistep.BasicStateBag)
-	state.Put("cache", cache)
 	state.Put("config", &b.config)
 	state.Put("debug", b.config.PackerDebug)
 	state.Put("hook", hook)
@@ -251,21 +244,8 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 
 	b.runner = &multistep.BasicRunner{Steps: steps}
 
-	done := make(chan struct{})
-
-	go func() {
-		select {
-		case <-done:
-			return
-		case <-b.context.Done():
-			b.runner.Cancel()
-			hook.Cancel()
-		}
-	}()
-
 	// Executes the steps
-	b.runner.Run(state)
-	close(done)
+	b.runner.Run(ctx, state)
 
 	if rawErr, ok := state.GetOk("error"); ok {
 		return nil, rawErr.(error)
@@ -278,12 +258,6 @@ func (b *Builder) Run(ui packer.Ui, hook packer.Hook, cache packer.Cache) (packe
 	}
 
 	return &Artifact{image: state.Get("imagefile").(string)}, nil
-}
-
-func (b *Builder) Cancel() {
-	if b.runner != nil {
-		b.cancel()
-	}
 }
 
 type Artifact struct {

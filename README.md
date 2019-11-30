@@ -30,6 +30,11 @@ To install the needed binaries on derivatives of the Debian Linux variant:
 sudo apt install kpartx qemu-user-static
 ```
 
+Fedora:
+```
+sudo dnf install kpartx qemu-user-static
+```
+
 Other commands that are used are (that should already be installed) : mount, umount, cp, ls, chroot.
 
 To resize the filesystem, the following commands are used:
@@ -86,6 +91,12 @@ vagrant provision --provision-with build-image
 The example config produces an image with go installed and extends the filesystem by 1GB.
 
 That's it! Flash it and run!
+
+# Running Standalone
+
+```
+packer build samples/raspbian_golang.json
+```
 
 # Flashing
 

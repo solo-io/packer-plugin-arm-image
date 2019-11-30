@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 
 	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
@@ -22,7 +23,7 @@ type StepMountExtra struct {
 	mounts    []string
 }
 
-func (s *StepMountExtra) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
+func (s *StepMountExtra) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 	mountPath := state.Get(s.ChrootKey).(string)
 	ui := state.Get("ui").(packer.Ui)
@@ -46,7 +47,7 @@ func (s *StepMountExtra) Run(_ context.Context, state multistep.StateBag) multis
 		}
 
 		ui.Message(fmt.Sprintf("Mounting: %s", mountInfo[2]))
-		if run(state, fmt.Sprintf(
+		if run(ctx, state, fmt.Sprintf(
 			"mount %s %s %s",
 			flags,
 			mountInfo[1],
@@ -74,11 +75,14 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 	if s.mounts == nil {
 		return nil
 	}
+	// give us a few seconds to clean up
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	mountPath := state.Get(s.ChrootKey).(string)
 	ui := state.Get("ui").(packer.Ui)
-        ui.Say("fuser -k " + mountPath)
-        run(state, "fuser -k " + mountPath + " || exit 0")
+	ui.Say("fuser -k " + mountPath)
+	run(context.TODO(), state, "fuser -k "+mountPath+" || exit 0")
 
 	wrappedCommand := state.Get("wrappedCommand").(CommandWrapper)
 	for len(s.mounts) > 0 {
@@ -94,7 +98,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		// Before attempting to unmount,
 		// check to see if path is already unmounted
 		stderr := new(bytes.Buffer)
-		cmd := ShellCommand(grepCommand)
+		cmd := ShellCommand(ctx, grepCommand)
 		cmd.Stderr = stderr
 		if err := cmd.Run(); err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
@@ -115,7 +119,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		}
 
 		stderr = new(bytes.Buffer)
-		cmd = ShellCommand(unmountCommand)
+		cmd = ShellCommand(ctx, unmountCommand)
 		cmd.Stderr = stderr
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf(

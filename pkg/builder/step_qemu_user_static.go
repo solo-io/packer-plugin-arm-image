@@ -52,7 +52,7 @@ int main(int argc, char **argv, char **envp) {
 }
 `
 
-func (s *stepQemuUserStatic) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
+func (s *stepQemuUserStatic) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	// Read our value and assert that it is they type we want
 	chrootDir := state.Get(s.ChrootKey).(string)
 	config := state.Get("config").(*Config)
@@ -66,19 +66,19 @@ func (s *stepQemuUserStatic) Run(_ context.Context, state multistep.StateBag) mu
 	s.Args.PathToQemuInChroot = srcqemu
 	state.Put(s.PathToQemuInChrootKey, s.Args.PathToQemuInChroot)
 
-	err := run(state, fmt.Sprintf("cp %s %s", srcqemu, s.destQemu))
+	err := run(ctx, state, fmt.Sprintf("cp %s %s", srcqemu, s.destQemu))
 	if err != nil {
 		return multistep.ActionHalt
 	}
 
-	err = s.makeWrapper(ui, state)
+	err = s.makeWrapper(ctx, ui, state)
 	if err != nil {
 		return multistep.ActionHalt
 	}
 	return multistep.ActionContinue
 }
 
-func (s *stepQemuUserStatic) makeWrapper(ui packer.Ui, state multistep.StateBag) error {
+func (s *stepQemuUserStatic) makeWrapper(ctx context.Context, ui packer.Ui, state multistep.StateBag) error {
 	if len(s.Args.Args) == 0 {
 		return nil
 	}
@@ -104,14 +104,14 @@ func (s *stepQemuUserStatic) makeWrapper(ui packer.Ui, state multistep.StateBag)
 	destWrapper := s.destQemu
 	s.destQemu += wrapped
 
-	err = run(state, fmt.Sprintf("mv %s %s", destWrapper, s.destQemu))
+	err = run(ctx, state, fmt.Sprintf("mv %s %s", destWrapper, s.destQemu))
 	if err != nil {
 		s.destQemu = destWrapper
 		return err
 	}
 
 	ui.Say("compiling arguments wrapper")
-	err = run(state, fmt.Sprintf("gcc -g -static %s -o %s", tmpfn, destWrapper))
+	err = run(ctx, state, fmt.Sprintf("gcc -g -static %s -o %s", tmpfn, destWrapper))
 	if err != nil {
 		return err
 	}

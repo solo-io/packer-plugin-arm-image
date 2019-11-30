@@ -5,6 +5,7 @@ package builder
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,14 +26,14 @@ type Communicator struct {
 	CmdWrapper CommandWrapper
 }
 
-func (c *Communicator) Start(cmd *packer.RemoteCmd) error {
+func (c *Communicator) Start(ctx context.Context, cmd *packer.RemoteCmd) error {
 	command, err := c.CmdWrapper(
 		fmt.Sprintf("chroot %s /bin/sh -c \"%s\"", c.Chroot, cmd.Command))
 	if err != nil {
 		return err
 	}
 
-	localCmd := ShellCommand(command)
+	localCmd := ShellCommand(ctx, command)
 	localCmd.Stdin = cmd.Stdin
 	localCmd.Stdout = cmd.Stdout
 	localCmd.Stderr = cmd.Stderr
@@ -82,7 +83,7 @@ func (c *Communicator) Upload(dst string, r io.Reader, fi *os.FileInfo) error {
 		return err
 	}
 
-	return ShellCommand(cpCmd).Run()
+	return ShellCommand(context.TODO(), cpCmd).Run()
 }
 
 func (c *Communicator) UploadDir(dst string, src string, exclude []string) error {
@@ -104,7 +105,7 @@ func (c *Communicator) UploadDir(dst string, src string, exclude []string) error
 	}
 
 	var stderr bytes.Buffer
-	cmd := ShellCommand(cpCmd)
+	cmd := ShellCommand(context.TODO(), cpCmd)
 	cmd.Env = append(cmd.Env, "LANG=C")
 	cmd.Env = append(cmd.Env, os.Environ()...)
 	cmd.Stderr = &stderr
@@ -122,7 +123,7 @@ func (c *Communicator) UploadDir(dst string, src string, exclude []string) error
 }
 
 func (c *Communicator) DownloadDir(src string, dst string, exclude []string) error {
-	return fmt.Errorf("DownloadDir is not implemented for amazon-chroot")
+	return fmt.Errorf("DownloadDir is not implemented for qemu-chroot")
 }
 
 func (c *Communicator) Download(src string, w io.Writer) error {
@@ -134,9 +135,6 @@ func (c *Communicator) Download(src string, w io.Writer) error {
 	}
 	defer f.Close()
 
-	if _, err := io.Copy(w, f); err != nil {
-		return err
-	}
-
-	return nil
+	_, err = io.Copy(w, f)
+	return err
 }

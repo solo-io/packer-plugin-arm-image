@@ -3,6 +3,7 @@
 package builder
 
 import (
+	"context"
 	"os/exec"
 )
 
@@ -12,6 +13,6 @@ type CommandWrapper func(string) (string, error)
 
 // ShellCommand takes a command string and returns an *exec.Cmd to execute
 // it within the context of a shell (/bin/sh).
-func ShellCommand(command string) *exec.Cmd {
-	return exec.Command("/bin/sh", "-c", command)
+func ShellCommand(ctx context.Context, command string) *exec.Cmd {
+	return exec.CommandContext(ctx, "/bin/sh", "-c", command)
 }

@@ -19,7 +19,7 @@ type stepMountImage struct {
 	mountpoints   []string
 }
 
-func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
+func (s *stepMountImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
 	config := state.Get("config").(*Config)
 
 	// Read our value and assert that it is they type we want
@@ -67,7 +67,7 @@ func (s *stepMountImage) Run(_ context.Context, state multistep.StateBag) multis
 
 		ui.Message(fmt.Sprintf("Mounting: %s", mntAndPart.part))
 
-		err := run(state, fmt.Sprintf(
+		err := run(ctx, state, fmt.Sprintf(
 			"mount %s %s",
 			mntAndPart.part, mntpnt))
 		if err != nil {
@@ -86,7 +86,7 @@ func (s *stepMountImage) Cleanup(state multistep.StateBag) {
 
 	if s.MountPath != "" {
 		for _, mntpnt := range reverse(s.mountpoints) {
-			run(state, "umount "+mntpnt)
+			run(context.TODO(), state, "umount "+mntpnt)
 		}
 		s.mountpoints = nil
 		// DO NOT do remove all here! if dev fails to umount it would be undesirable.
