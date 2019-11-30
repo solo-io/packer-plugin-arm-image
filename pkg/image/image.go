@@ -11,6 +11,9 @@ import (
 	filetype "gopkg.in/h2non/filetype.v1"
 	"gopkg.in/h2non/filetype.v1/matchers"
 
+	"compress/bzip2"
+	"compress/gzip"
+
 	"github.com/ulikunitz/xz"
 )
 
@@ -81,6 +84,12 @@ func (s *imageOpener) Open(fpath string) (Image, error) {
 	case matchers.TypeXz:
 		s.ui.Say("Image is a xz file.")
 		return s.openxz(f)
+	case matchers.TypeGz:
+		s.ui.Say("Image is a gzip file.")
+		return s.opengzip(f)
+	case matchers.TypeBz2:
+		s.ui.Say("Image is a gzip file.")
+		return s.openbzip(f)
 	default:
 		return openImage(f)
 	}
@@ -122,9 +131,51 @@ func (s *imageOpener) openzip(f *os.File) (Image, error) {
 	return mc, nil
 }
 
-func (s *imageOpener) xzFastlane(f *os.File) (Image, error) {
+func (s *imageOpener) openxz(f *os.File) (Image, error) {
+	return uncompress(f, "xzcat", func(r io.Reader) (io.Reader, error) { r2, e := xz.NewReader(r); return r2, e })
+}
 
-	xzcat := exec.Command("xzcat")
+func (s *imageOpener) opengzip(f *os.File) (Image, error) {
+
+	return uncompress(f, "zcat", func(r io.Reader) (io.Reader, error) { r2, e := gzip.NewReader(r); return r2, e })
+}
+
+func (s *imageOpener) openbzip(f *os.File) (Image, error) {
+
+	return uncompress(f, "bzcat", func(r io.Reader) (io.Reader, error) { r2 := bzip2.NewReader(r); return r2, nil })
+}
+
+func uncompress(f *os.File, fastcmd string, slowNewReader func(r io.Reader) (io.Reader, error)) (Image, error) {
+	defer func() {
+		if f != nil {
+			f.Close()
+		}
+	}()
+
+	// check if available:
+	if exec.Command("which", fastcmd).Run() == nil {
+		ret, err := xzFastlane(fastcmd, f)
+		if err == nil {
+			f = nil
+			return ret, err
+		}
+	}
+	// slow lane here
+	r, err := slowNewReader(f)
+	if err != nil {
+		return nil, err
+	}
+
+	//transfer ownership
+	mc := &multiCloser{r, []io.Closer{f}, 0}
+	f = nil
+
+	return mc, nil
+}
+
+func xzFastlane(cmd string, f *os.File) (Image, error) {
+
+	xzcat := exec.Command(cmd)
 
 	// fast path, use xzcat
 	xzcat.Stdin = f
@@ -146,34 +197,6 @@ func (s *imageOpener) xzFastlane(f *os.File) (Image, error) {
 
 	return mc, nil
 
-}
-
-func (s *imageOpener) openxz(f *os.File) (Image, error) {
-	defer func() {
-		if f != nil {
-			f.Close()
-		}
-	}()
-
-	// check if available:
-	if exec.Command("which", "xzcat").Run() == nil {
-		ret, err := s.xzFastlane(f)
-		if err == nil {
-			f = nil
-			return ret, err
-		}
-	}
-	// slow lane here
-	r, err := xz.NewReader(f)
-	if err != nil {
-		return nil, err
-	}
-
-	//transfer ownership
-	mc := &multiCloser{r, []io.Closer{f}, 0}
-	f = nil
-
-	return mc, nil
 }
 
 type multiCloser struct {
