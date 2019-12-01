@@ -59,6 +59,8 @@ Supporting also zipped images (enabling you downloading official raspbian images
 
 See [raspbian_golang.json](samples/raspbian_golang.json) and [builder.go](pkg/builder/builder.go) for details.
 
+*Note* if your image is arm64, set `qemu_binary` to `qemu-aarch64-static` in your configuration json file.
+
 # Compiling and Testing
 ## Building
 As this tool performs low-level OS manipulations - consider using a VM to run this code for isolation. While this is highly recommended, it is not mandatory.

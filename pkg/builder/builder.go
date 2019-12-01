@@ -54,6 +54,7 @@ type Config struct {
 
 	// Image type. this is used to deduce other settings like image mounts and qemu args.
 	// If not provided, we will try to deduce it from the image url. (see autoDetectType())
+	// For list of valid values, see: pkg/image/utils/images.go
 	ImageType utils.KnownImageType `mapstructure:"image_type"`
 
 	// Where to mounts the image partitions in the chroot.
