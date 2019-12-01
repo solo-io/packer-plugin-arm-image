@@ -24,11 +24,12 @@ type stepQemuUserStatic struct {
 	ChrootKey             string
 	PathToQemuInChrootKey string
 
-	Args        Args
-	destQemu    string
-	destWrapper string
+	Args                    Args
+	qemuDestinationInChroot string
+	destWrapper             string
 }
 
+// if we need to pass args to qemu, we need to compile a static wrapper
 const argsTemplate = `
 // for malloc
 #include <stdlib.h>
@@ -59,14 +60,16 @@ func (s *stepQemuUserStatic) Run(ctx context.Context, state multistep.StateBag) 
 
 	ui := state.Get("ui").(packer.Ui)
 	ui.Say("Installing qemu-user-static in the chroot")
-	srcqemu := config.QemuBinary
-	// TODO: maybe put qemu in the temporary dir in the root of the chroot? to guarantee
-	// existance of directory and easy cleanup
-	s.destQemu = filepath.Join(chrootDir, srcqemu)
-	s.Args.PathToQemuInChroot = srcqemu
+	qemuInHostPath := config.QemuBinary
+	_, qemuFilename := filepath.Split(qemuInHostPath)
+
+	// place qemu in the root dir in the chroot, as it is guaranteed to exist
+	s.Args.PathToQemuInChroot = "/" + qemuFilename
+
+	s.qemuDestinationInChroot = filepath.Join(chrootDir, s.Args.PathToQemuInChroot)
 	state.Put(s.PathToQemuInChrootKey, s.Args.PathToQemuInChroot)
 
-	err := run(ctx, state, fmt.Sprintf("cp %s %s", srcqemu, s.destQemu))
+	err := run(ctx, state, fmt.Sprintf("cp %s %s", qemuInHostPath, s.qemuDestinationInChroot))
 	if err != nil {
 		return multistep.ActionHalt
 	}
@@ -83,6 +86,7 @@ func (s *stepQemuUserStatic) makeWrapper(ctx context.Context, ui packer.Ui, stat
 		return nil
 	}
 
+	// prepare source file for wrapper
 	t := template.Must(template.New("qemu-wrapper").Parse(argsTemplate))
 
 	s.Args.PathToQemuInChroot += wrapped
@@ -101,28 +105,31 @@ func (s *stepQemuUserStatic) makeWrapper(ctx context.Context, ui packer.Ui, stat
 		return err
 	}
 
-	destWrapper := s.destQemu
-	s.destQemu += wrapped
+	// move original qemu. keep track so we can clean up
+	destWrapper := s.qemuDestinationInChroot
+	s.qemuDestinationInChroot += wrapped
 
-	err = run(ctx, state, fmt.Sprintf("mv %s %s", destWrapper, s.destQemu))
+	err = run(ctx, state, fmt.Sprintf("mv %s %s", destWrapper, s.qemuDestinationInChroot))
 	if err != nil {
-		s.destQemu = destWrapper
+		s.qemuDestinationInChroot = destWrapper
 		return err
 	}
 
+	// compile wrapper to the location of the original qemu
 	ui.Say("compiling arguments wrapper")
 	err = run(ctx, state, fmt.Sprintf("gcc -g -static %s -o %s", tmpfn, destWrapper))
 	if err != nil {
 		return err
 	}
 
+	// keep track so we can clean up
 	s.destWrapper = destWrapper
 	return nil
 }
 
 func (s *stepQemuUserStatic) Cleanup(state multistep.StateBag) {
-	if s.destQemu != "" {
-		os.Remove(s.destQemu)
+	if s.qemuDestinationInChroot != "" {
+		os.Remove(s.qemuDestinationInChroot)
 	}
 	if s.destWrapper != "" {
 		os.Remove(s.destWrapper)
