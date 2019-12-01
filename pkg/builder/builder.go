@@ -21,17 +21,23 @@ import (
 
 const BuilderId = "yuval-k.arm-image"
 
-var knownTypes map[utils.KnownImageType][]string
-var knownArgs map[utils.KnownImageType][]string
-
-func init() {
-	knownTypes = make(map[utils.KnownImageType][]string)
-	knownArgs = make(map[utils.KnownImageType][]string)
-	knownTypes[utils.RaspberryPi] = []string{"/boot", "/"}
-	knownTypes[utils.BeagleBone] = []string{"/"}
-	knownTypes[utils.Kali] = []string{"/root", "/"}
-	knownArgs[utils.BeagleBone] = []string{"-cpu", "cortex-a8"}
-}
+var (
+	knownTypes = map[utils.KnownImageType][]string{
+		utils.RaspberryPi: {"/boot", "/"},
+		utils.BeagleBone:  {"/"},
+		utils.Kali:        {"/root", "/"},
+	}
+	knownArgs = map[utils.KnownImageType][]string{
+		utils.BeagleBone: {"-cpu", "cortex-a8"},
+	}
+	defaultChrootTypes = [][]string{
+		{"proc", "proc", "/proc"},
+		{"sysfs", "sysfs", "/sys"},
+		{"bind", "/dev", "/dev"},
+		{"devpts", "devpts", "/dev/pts"},
+		{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
+	}
+)
 
 type Config struct {
 	packer_common.PackerConfig `mapstructure:",squash"`
@@ -59,9 +65,17 @@ type Config struct {
 	MountPath string `mapstructure:"mount_path"`
 
 	// What directories mount from the host to the chroot.
-	// leave it empty for reasonable deafults.
+	// leave it empty for reasonable defaults.
 	// array of triplets: [type, device, mntpoint].
 	ChrootMounts [][]string `mapstructure:"chroot_mounts"`
+
+	// What directories mount from the host to the chroot, in addition to the default ones.
+	// Use this instead of `chroot_mounts` if you want to add to the existing defaults instead of
+	// overriding them
+	// array of triplets: [type, device, mntpoint].
+	// for example: `["bind", "/run/systemd", "/run/systemd"]`
+	AdditionalChrootMounts [][]string `mapstructure:"additional_chroot_mounts"`
+
 	// Should the last partition be extended? this only works for the last partition in the
 	// dos partition table, and ext filesystem
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
@@ -118,13 +132,11 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	}
 
 	if len(b.config.ChrootMounts) == 0 {
-		b.config.ChrootMounts = [][]string{
-			{"proc", "proc", "/proc"},
-			{"sysfs", "sysfs", "/sys"},
-			{"bind", "/dev", "/dev"},
-			{"devpts", "devpts", "/dev/pts"},
-			{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
-		}
+		b.config.ChrootMounts = defaultChrootTypes
+	}
+
+	if len(b.config.AdditionalChrootMounts) > 0 {
+		b.config.ChrootMounts = append(b.config.ChrootMounts, b.config.AdditionalChrootMounts...)
 	}
 
 	if b.config.CommandWrapper == "" {
@@ -185,9 +197,8 @@ type wrappedCommandTemplate struct {
 func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
 
 	wrappedCommand := func(command string) (string, error) {
-		ctx := b.config.ctx
-		ctx.Data = &wrappedCommandTemplate{Command: command}
-		return interpolate.Render(b.config.CommandWrapper, &ctx)
+		b.config.ctx.Data = &wrappedCommandTemplate{Command: command}
+		return interpolate.Render(b.config.CommandWrapper, &b.config.ctx)
 	}
 
 	state := new(multistep.BasicStateBag)
