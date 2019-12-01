@@ -13,7 +13,7 @@
 # * filename
 #
 # Script to upload a release asset using the GitHub API v3.
-# Set GITHUB_TOKEN to your token.
+# Set GITHUB_API_TOKEN to your token.
 #
 # Example:
 #
@@ -63,4 +63,4 @@ GH_ASSET="https://uploads.github.com/repos/$owner/$repo/releases/$id/assets?name
 # Upload asset
 echo "Uploading asset $GH_ASSET ..."
 
-curl --fail --data-binary @"$filename" -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/octet-stream" $GH_ASSET
+curl --fail --data-binary @"$filename" -H "Authorization: token $GITHUB_API_TOKEN" -H "Content-Type: application/octet-stream" $GH_ASSET
