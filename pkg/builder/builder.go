@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 
@@ -50,7 +51,11 @@ type Config struct {
 	CommandWrapper string `mapstructure:"command_wrapper"`
 
 	// Output directory, where the final image will be stored.
+	// Deprecated - Use OutputFile instead
 	OutputDir string `mapstructure:"output_directory"`
+
+	// Output filename, where the final image will be stored
+	OutputFile string `mapstructure:"output_filename"`
 
 	// Image type. this is used to deduce other settings like image mounts and qemu args.
 	// If not provided, we will try to deduce it from the image url. (see autoDetectType())
@@ -124,8 +129,13 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	warnings = append(warnings, isoWarnings...)
 	errs = packer.MultiErrorAppend(errs, isoErrs...)
 
-	if b.config.OutputDir == "" {
-		b.config.OutputDir = fmt.Sprintf("output-%s", b.config.PackerConfig.PackerBuildName)
+	if b.config.OutputFile == "" {
+		if b.config.OutputDir != "" {
+			warnings = append(warnings, "output_directory is deprecated, use output_filename instead.")
+			b.config.OutputFile = filepath.Join(b.config.OutputDir, "image")
+		} else {
+			b.config.OutputFile = fmt.Sprintf("output-%s/image", b.config.PackerConfig.PackerBuildName)
+		}
 	}
 
 	if b.config.ChrootMounts == nil {

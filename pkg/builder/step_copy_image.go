@@ -27,16 +27,16 @@ func (s *stepCopyImage) Run(ctx context.Context, state multistep.StateBag) multi
 	s.ui = state.Get("ui").(packer.Ui)
 	s.ui.Say("Copying source image.")
 
-	imageName := "image"
+	outputDir := filepath.Dir(config.OutputFile)
+	imageName := filepath.Base(config.OutputFile)
 
-	dstfile := filepath.Join(config.OutputDir, imageName)
-	err := s.copy(ctx, state, fromFile, config.OutputDir, imageName)
+	err := s.copy(ctx, state, fromFile, outputDir, imageName)
 	if err != nil {
 		s.ui.Error(fmt.Sprintf("%v", err))
 		return multistep.ActionHalt
 	}
 
-	state.Put(s.ResultKey, dstfile)
+	state.Put(s.ResultKey, config.OutputFile)
 	return multistep.ActionContinue
 }
 
