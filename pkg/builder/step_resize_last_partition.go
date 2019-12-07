@@ -34,7 +34,7 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 		return multistep.ActionHalt
 	}
 
-  currentSize := stat.Size()
+	currentSize := stat.Size()
 	if targetSize > 0 {
 		if targetSize < currentSize {
 			ui.Error(fmt.Sprintf("Cannot shrink partition, current size is %v, new size is %v",
@@ -42,9 +42,13 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 			return multistep.ActionHalt
 		}
 
+		if targetSize == currentSize {
+	                return multistep.ActionContinue
+		}
+
 		ui.Say(fmt.Sprintf("Growing partition to %v M (%v bytes)", targetSize / 1024 / 1024, targetSize))
 		extraSize = targetSize - currentSize
-  } else {
+	} else {
 		ui.Say(fmt.Sprintf("Growing partition with %v M (%v bytes)", extraSize / 1024 / 1024, extraSize))
 		targetSize = currentSize + extraSize
 	}
