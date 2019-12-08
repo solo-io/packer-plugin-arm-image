@@ -21,10 +21,10 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 	imagefile := state.Get(s.FromKey).(string)
 	config := state.Get("config").(*Config)
 	ui := state.Get("ui").(packer.Ui)
-	targetSize := config.TargetImageSize
-	extrata := config.LastPartitionExtraSize // legacy way to specify extension
+	extraSize := int64(config.LastPartitionExtraSize) // legacy way to resize last partition
+	targetSize := int64(config.TargetImageSize)
 
-	if extrata == 0 && targetSize == 0 {
+	if extraSize <= 0 && targetSize <= 0 {
 		return multistep.ActionContinue
 	}
 
@@ -34,21 +34,29 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 		return multistep.ActionHalt
 	}
 
-	if targetSize > 0 && targetSize < uint64(stat.Size()) {
-		ui.Error(fmt.Sprintf("target_image_size (%v) is smaller than actual image size (%v). Cannot shrink image.",
-			targetSize, stat.Size()))
-		return multistep.ActionHalt
-	}
-	if targetSize > 0 && extrata > 0 {
-		ui.Say("both last_partition_extra_size and target_image_size was specified - ignoring last_partition_extra_size")
-		extrata = uint64(stat.Size()) - targetSize
+	currentSize := stat.Size()
+	if targetSize > 0 {
+		if targetSize < currentSize {
+			ui.Error(fmt.Sprintf("Cannot shrink partition, current size is %v, new size is %v",
+				currentSize, targetSize))
+			return multistep.ActionHalt
+		}
+
+		if targetSize == currentSize {
+	                return multistep.ActionContinue
+		}
+
+		ui.Say(fmt.Sprintf("Growing partition to %v M (%v bytes)", targetSize / 1024 / 1024, targetSize))
+		extraSize = targetSize - currentSize
+	} else {
+		ui.Say(fmt.Sprintf("Growing partition with %v M (%v bytes)", extraSize / 1024 / 1024, extraSize))
+		targetSize = currentSize + extraSize
 	}
 
-	ui.Say("Resizing the last partition.")
-	err = os.Truncate(imagefile, int64(extrata)+stat.Size())
-	// resizer image
+	// resize image
+	err = os.Truncate(imagefile, targetSize)
 	if err != nil {
-		ui.Error(fmt.Sprintf("Error enlarging image file %v", err))
+		ui.Error(fmt.Sprintf("Error growing image file %v", err))
 		return multistep.ActionHalt
 	}
 
@@ -76,7 +84,7 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 		ui.Error(fmt.Sprintf("no partition %v", *mbrp))
 		return multistep.ActionHalt
 	}
-	extrasector := uint32(extrata >> SectorShift)
+	extrasector := uint32(extraSize >> SectorShift)
 	part.SetLBALen(part.GetLBALen() + extrasector)
 
 	f, err := os.OpenFile(imagefile, os.O_RDWR|os.O_SYNC, 0600)

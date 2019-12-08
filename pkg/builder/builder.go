@@ -232,7 +232,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&stepCopyImage{FromKey: "iso_path", ResultKey: "imagefile", ImageOpener: image.NewImageOpener(ui)},
 	}
 
-	if b.config.LastPartitionExtraSize > 0 {
+	if b.config.LastPartitionExtraSize > 0 || b.config.TargetImageSize > 0 {
 		steps = append(steps,
 			&stepResizeLastPart{FromKey: "imagefile"},
 		)
@@ -241,7 +241,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	steps = append(steps,
 		&stepMapImage{ImageKey: "imagefile", ResultKey: "partitions"},
 	)
-	if b.config.LastPartitionExtraSize > 0 {
+	if b.config.LastPartitionExtraSize > 0 || b.config.TargetImageSize > 0 {
 		steps = append(steps,
 			&stepResizeFs{PartitionsKey: "partitions"},
 		)
