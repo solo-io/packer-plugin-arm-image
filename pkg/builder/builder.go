@@ -138,6 +138,10 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 		}
 	}
 
+	if b.config.LastPartitionExtraSize > 0 {
+		warnings = append(warnings, "last_partition_extra_size is deprecated, use target_image_size to grow your image")
+	}
+
 	if b.config.ChrootMounts == nil {
 		b.config.ChrootMounts = make([][]string, 0)
 	}
