@@ -11,7 +11,7 @@ type KnownImageType string
 const (
 	RaspberryPi KnownImageType = "raspberrypi"
 	BeagleBone  KnownImageType = "beaglebone"
-	Kali  KnownImageType = "kali"
+	Kali        KnownImageType = "kali"
 )
 
 func GuessImageType(url string) KnownImageType {
