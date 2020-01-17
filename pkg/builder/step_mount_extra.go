@@ -34,11 +34,13 @@ func (s *StepMountExtra) Run(ctx context.Context, state multistep.StateBag) mult
 	for _, mountInfo := range config.ChrootMounts {
 		innerPath := mountPath + mountInfo[2]
 
-		if err := os.MkdirAll(innerPath, 0755); err != nil {
-			err := fmt.Errorf("Error creating mount directory: %s", err)
-			state.Put("error", err)
-			ui.Error(err.Error())
-			return multistep.ActionHalt
+		if _, err := os.Stat(innerPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(innerPath, 0755); err != nil {
+				err := fmt.Errorf("Error creating mount directory: %s", err)
+				state.Put("error", err)
+				ui.Error(err.Error())
+				return multistep.ActionHalt
+			}
 		}
 
 		flags := "-t " + mountInfo[0]
