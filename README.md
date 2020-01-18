@@ -94,6 +94,29 @@ The example config produces an image with go installed and extends the filesyste
 
 That's it! Flash it and run!
 
+## Running with Docker
+
+- Build the `packer-builder-arm` Docker image
+
+```
+docker build -t packer-builder-arm .
+```
+
+- Build the `samples/raspbian_golang.json` Packer image
+```
+docker run \
+  --rm \
+  --privileged \
+  -v ${PWD}:/build \
+  -v ${PWD}/packer_cache:/build/packer_cache \
+  -v ${PWD}/output:/build/output \
+  packer-builder-arm build samples/raspbian_golang.json
+```
+
+- Flashing your image
+
+Follow the examples in the **Flashing** section of this document.
+
 # Running Standalone
 
 ```
@@ -102,12 +125,29 @@ packer build samples/raspbian_golang.json
 
 # Flashing
 
-We have a post-processor stage for flashing. You can also use the command line:
+We have a post-processor stage for flashing. 
+
+## Golang flasher
 ```
 go build cmd/flasher/main.go
 ```
 
 It will auto-detect most things and guides you with questions.
+
+## dd
+
+(Tested on MacOS)
+
+```
+# find the identifier of the device you want to flash
+diskutil list
+# un-mount the disk
+diskutil unmountDisk /dev/disk2
+# flash the image, go for a coffee
+sudo dd bs=4m if=output-arm-image/image of=/dev/disk2
+# eject the disk
+diskutil eject /dev/disk2
+```
 
 # Cookbook
 # Raspberry Pi

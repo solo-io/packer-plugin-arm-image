@@ -2,3 +2,5 @@
 *.img
 *.log
 packer-builder-arm-image
+output-arm-image/
+packer_cache/
