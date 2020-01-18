@@ -12,14 +12,24 @@ set -x
 # Update the system
 sudo apt-get update -qq
 
-sudo DEBIAN_FRONTEND=noninteractive apt-get -y --force-yes -qq -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" dist-upgrade
+sudo DEBIAN_FRONTEND=noninteractive apt-get \
+  -y \
+  --allow-downgrades \
+  --allow-remove-essential \
+  --allow-change-held-packages \
+ -qq \
+ -o Dpkg::Options::="--force-confdef" \
+ -o Dpkg::Options::="--force-confold" \
+  dist-upgrade
+
+# Provides the add-apt-repository script
 sudo apt-get install -y software-properties-common
 
 # Add the golang repo
-sudo add-apt-repository --yes ppa:gophers/archive
+sudo add-apt-repository --yes ppa:longsleep/golang-backports
+sudo apt-get update
 
 # Install required packages
-sudo apt-get update
 sudo apt-get install -y \
     kpartx \
     qemu-user-static \
@@ -28,27 +38,24 @@ sudo apt-get install -y \
     curl \
     vim \
     unzip \
-    golang-1.9-go \
+    golang-go \
     gcc
 
 # Set GO paths for vagrant user
-echo 'export GOROOT=/usr/lib/go-1.9
+echo 'export GOROOT=/usr/lib/go-1.13
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin' | tee -a /home/vagrant/.profile
 
 # Also set them while we work:
-export GOROOT=/usr/lib/go-1.9
+export GOROOT=/usr/lib/go-1.13
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
-# Install go dep
-go get -u github.com/golang/dep/cmd/dep
-
 # Download and install packer
 [[ -e /tmp/packer ]] && rm /tmp/packer
-wget https://releases.hashicorp.com/packer/1.3.5/packer_1.3.5_linux_amd64.zip \
-    -q -O /tmp/packer_1.3.5_linux_amd64.zip
-pushd /tmp
-unzip -u packer_1.3.5_linux_amd64.zip
+wget https://releases.hashicorp.com/packer/1.4.5/packer_1.4.5_linux_amd64.zip \
+    -q -O /tmp/packer_1.4.5_linux_amd64.zip
+cd /tmp
+unzip -u packer_1.4.5_linux_amd64.zip
 sudo cp packer /usr/local/bin
-popd
+cd ..

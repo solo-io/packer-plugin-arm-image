@@ -10,7 +10,7 @@ With this plugin, you can:
 - Resize the last partition (the filesystem partition in the raspberry pi) in case you need more
   space than the default.
 
-Tested for Raspbian images on built on Ubuntu 17.10. It is based partly on the chroot AWS 
+Tested for Raspbian images on built on Ubuntu 19.10. It is based partly on the chroot AWS
 provisioner, though the code was copied to prevent AWS dependencies.
 
 # How it works?
