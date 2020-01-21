@@ -20,7 +20,7 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 	image := state.Get(s.ImageKey).(string)
 	ui := state.Get("ui").(packer.Ui)
 
-	ui.Message(fmt.Sprintf("mappping %s", image))
+	ui.Message(fmt.Sprintf("mapping %s", image))
 	// if run(state, fmt.Sprintf(
 	//	"kpartx -s -a %s",
 	//	image)) != nil {

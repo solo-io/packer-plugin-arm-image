@@ -1,0 +1,6 @@
+# Ignore everything
+**
+
+# Include only the files we need
+!/pkg
+!entrypoint.sh

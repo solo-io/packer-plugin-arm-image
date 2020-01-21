@@ -5,13 +5,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/hashicorp/packer/packer"
-
+	packer_common "github.com/hashicorp/packer/common"
 	"github.com/hashicorp/packer/helper/multistep"
+	"github.com/hashicorp/packer/packer"
 )
 
 func run(ctx context.Context, state multistep.StateBag, cmds string) error {
-	wrappedCommand := state.Get("wrappedCommand").(CommandWrapper)
+	wrappedCommand := state.Get("wrappedCommand").(packer_common.CommandWrapper)
 	ui := state.Get("ui").(packer.Ui)
 
 	shellcmd, err := wrappedCommand(cmds)
@@ -24,7 +24,7 @@ func run(ctx context.Context, state multistep.StateBag, cmds string) error {
 
 	stderr := new(bytes.Buffer)
 
-	cmd := ShellCommand(ctx, shellcmd)
+	cmd := packer_common.ShellCommand(shellcmd)
 	cmd.Stderr = stderr
 	if err := cmd.Run(); err != nil {
 		err := fmt.Errorf(

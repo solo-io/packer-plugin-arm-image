@@ -40,6 +40,7 @@ var (
 		{"bind", "/dev", "/dev"},
 		{"devpts", "devpts", "/dev/pts"},
 		{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
+		{"bind", "/etc/resolv.conf", "/etc/resolv.conf"},
 	}
 )
 
@@ -145,6 +146,10 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 		}
 	}
 
+	if b.config.LastPartitionExtraSize > 0 {
+		warnings = append(warnings, "last_partition_extra_size is deprecated, use target_image_size to grow your image")
+	}
+
 	if b.config.ChrootMounts == nil {
 		b.config.ChrootMounts = make([][]string, 0)
 	}
@@ -224,7 +229,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("debug", b.config.PackerDebug)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
-	state.Put("wrappedCommand", CommandWrapper(wrappedCommand))
+	state.Put("wrappedCommand", packer_common.CommandWrapper(wrappedCommand))
 
 	steps := []multistep.Step{
 		&packer_common.StepDownload{

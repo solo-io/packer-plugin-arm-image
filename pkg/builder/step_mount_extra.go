@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 	"syscall"
-	"time"
 
+	packer_common "github.com/hashicorp/packer/common"
 	"github.com/hashicorp/packer/helper/multistep"
 	"github.com/hashicorp/packer/packer"
 )
@@ -34,11 +34,13 @@ func (s *StepMountExtra) Run(ctx context.Context, state multistep.StateBag) mult
 	for _, mountInfo := range config.ChrootMounts {
 		innerPath := mountPath + mountInfo[2]
 
-		if err := os.MkdirAll(innerPath, 0755); err != nil {
-			err := fmt.Errorf("Error creating mount directory: %s", err)
-			state.Put("error", err)
-			ui.Error(err.Error())
-			return multistep.ActionHalt
+		if _, err := os.Stat(innerPath); os.IsNotExist(err) {
+			if err := os.MkdirAll(innerPath, 0755); err != nil {
+				err := fmt.Errorf("Error creating mount directory: %s", err)
+				state.Put("error", err)
+				ui.Error(err.Error())
+				return multistep.ActionHalt
+			}
 		}
 
 		flags := "-t " + mountInfo[0]
@@ -75,16 +77,13 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 	if s.mounts == nil {
 		return nil
 	}
-	// give us a few seconds to clean up
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
 
 	mountPath := state.Get(s.ChrootKey).(string)
 	ui := state.Get("ui").(packer.Ui)
 	ui.Say("fuser -k " + mountPath)
 	run(context.TODO(), state, "fuser -k "+mountPath+" || exit 0")
 
-	wrappedCommand := state.Get("wrappedCommand").(CommandWrapper)
+	wrappedCommand := state.Get("wrappedCommand").(packer_common.CommandWrapper)
 	for len(s.mounts) > 0 {
 		var path string
 		lastIndex := len(s.mounts) - 1
@@ -98,7 +97,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		// Before attempting to unmount,
 		// check to see if path is already unmounted
 		stderr := new(bytes.Buffer)
-		cmd := ShellCommand(ctx, grepCommand)
+		cmd := packer_common.ShellCommand(grepCommand)
 		cmd.Stderr = stderr
 		if err := cmd.Run(); err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
@@ -119,7 +118,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		}
 
 		stderr = new(bytes.Buffer)
-		cmd = ShellCommand(ctx, unmountCommand)
+		cmd = packer_common.ShellCommand(unmountCommand)
 		cmd.Stderr = stderr
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf(

@@ -43,13 +43,13 @@ func (s *stepResizeLastPart) Run(_ context.Context, state multistep.StateBag) mu
 		}
 
 		if targetSize == currentSize {
-	                return multistep.ActionContinue
+			return multistep.ActionContinue
 		}
 
-		ui.Say(fmt.Sprintf("Growing partition to %v M (%v bytes)", targetSize / 1024 / 1024, targetSize))
+		ui.Say(fmt.Sprintf("Growing partition to %v M (%v bytes)", targetSize/1024/1024, targetSize))
 		extraSize = targetSize - currentSize
 	} else {
-		ui.Say(fmt.Sprintf("Growing partition with %v M (%v bytes)", extraSize / 1024 / 1024, extraSize))
+		ui.Say(fmt.Sprintf("Growing partition with %v M (%v bytes)", extraSize/1024/1024, extraSize))
 		targetSize = currentSize + extraSize
 	}
 
