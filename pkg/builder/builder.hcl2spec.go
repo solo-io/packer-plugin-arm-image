@@ -10,32 +10,32 @@ import (
 // FlatConfig is an auto-generated flat version of Config.
 // Where the contents of a field with a `mapstructure:,squash` tag are bubbled up.
 type FlatConfig struct {
-	PackerBuildName        *string              `mapstructure:"packer_build_name" cty:"packer_build_name"`
-	PackerBuilderType      *string              `mapstructure:"packer_builder_type" cty:"packer_builder_type"`
-	PackerDebug            *bool                `mapstructure:"packer_debug" cty:"packer_debug"`
-	PackerForce            *bool                `mapstructure:"packer_force" cty:"packer_force"`
-	PackerOnError          *string              `mapstructure:"packer_on_error" cty:"packer_on_error"`
-	PackerUserVars         map[string]string    `mapstructure:"packer_user_variables" cty:"packer_user_variables"`
-	PackerSensitiveVars    []string             `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables"`
-	ISOChecksum            *string              `mapstructure:"iso_checksum" required:"true" cty:"iso_checksum"`
-	ISOChecksumURL         *string              `mapstructure:"iso_checksum_url" cty:"iso_checksum_url"`
-	ISOChecksumType        *string              `mapstructure:"iso_checksum_type" cty:"iso_checksum_type"`
-	RawSingleISOUrl        *string              `mapstructure:"iso_url" required:"true" cty:"iso_url"`
-	ISOUrls                []string             `mapstructure:"iso_urls" cty:"iso_urls"`
-	TargetPath             *string              `mapstructure:"iso_target_path" cty:"iso_target_path"`
-	TargetExtension        *string              `mapstructure:"iso_target_extension" cty:"iso_target_extension"`
-	CommandWrapper         *string              `mapstructure:"command_wrapper" cty:"command_wrapper"`
-	OutputDir              *string              `mapstructure:"output_directory" cty:"output_directory"`
-	OutputFile             *string              `mapstructure:"output_filename" cty:"output_filename"`
-	ImageType              utils.KnownImageType `mapstructure:"image_type" cty:"image_type"`
-	ImageMounts            []string             `mapstructure:"image_mounts" cty:"image_mounts"`
-	MountPath              *string              `mapstructure:"mount_path" cty:"mount_path"`
-	ChrootMounts           [][]string           `mapstructure:"chroot_mounts" cty:"chroot_mounts"`
-	AdditionalChrootMounts [][]string           `mapstructure:"additional_chroot_mounts" cty:"additional_chroot_mounts"`
-	LastPartitionExtraSize *uint64              `mapstructure:"last_partition_extra_size" cty:"last_partition_extra_size"`
-	TargetImageSize        *uint64              `mapstructure:"target_image_size" cty:"target_image_size"`
-	QemuBinary             *string              `mapstructure:"qemu_binary" cty:"qemu_binary"`
-	QemuArgs               []string             `mapstructure:"qemu_args" cty:"qemu_args"`
+	PackerBuildName        *string               `mapstructure:"packer_build_name" cty:"packer_build_name"`
+	PackerBuilderType      *string               `mapstructure:"packer_builder_type" cty:"packer_builder_type"`
+	PackerDebug            *bool                 `mapstructure:"packer_debug" cty:"packer_debug"`
+	PackerForce            *bool                 `mapstructure:"packer_force" cty:"packer_force"`
+	PackerOnError          *string               `mapstructure:"packer_on_error" cty:"packer_on_error"`
+	PackerUserVars         map[string]string     `mapstructure:"packer_user_variables" cty:"packer_user_variables"`
+	PackerSensitiveVars    []string              `mapstructure:"packer_sensitive_variables" cty:"packer_sensitive_variables"`
+	ISOChecksum            *string               `mapstructure:"iso_checksum" required:"true" cty:"iso_checksum"`
+	ISOChecksumURL         *string               `mapstructure:"iso_checksum_url" cty:"iso_checksum_url"`
+	ISOChecksumType        *string               `mapstructure:"iso_checksum_type" cty:"iso_checksum_type"`
+	RawSingleISOUrl        *string               `mapstructure:"iso_url" required:"true" cty:"iso_url"`
+	ISOUrls                []string              `mapstructure:"iso_urls" cty:"iso_urls"`
+	TargetPath             *string               `mapstructure:"iso_target_path" cty:"iso_target_path"`
+	TargetExtension        *string               `mapstructure:"iso_target_extension" cty:"iso_target_extension"`
+	CommandWrapper         *string               `mapstructure:"command_wrapper" cty:"command_wrapper"`
+	OutputDir              *string               `mapstructure:"output_directory" cty:"output_directory"`
+	OutputFile             *string               `mapstructure:"output_filename" cty:"output_filename"`
+	ImageType              *utils.KnownImageType `mapstructure:"image_type" cty:"image_type"`
+	ImageMounts            []string              `mapstructure:"image_mounts" cty:"image_mounts"`
+	MountPath              *string               `mapstructure:"mount_path" cty:"mount_path"`
+	ChrootMounts           [][]string            `mapstructure:"chroot_mounts" cty:"chroot_mounts"`
+	AdditionalChrootMounts [][]string            `mapstructure:"additional_chroot_mounts" cty:"additional_chroot_mounts"`
+	LastPartitionExtraSize *uint64               `mapstructure:"last_partition_extra_size" cty:"last_partition_extra_size"`
+	TargetImageSize        *uint64               `mapstructure:"target_image_size" cty:"target_image_size"`
+	QemuBinary             *string               `mapstructure:"qemu_binary" cty:"qemu_binary"`
+	QemuArgs               []string              `mapstructure:"qemu_args" cty:"qemu_args"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -67,7 +67,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"command_wrapper":            &hcldec.AttrSpec{Name: "command_wrapper", Type: cty.String, Required: false},
 		"output_directory":           &hcldec.AttrSpec{Name: "output_directory", Type: cty.String, Required: false},
 		"output_filename":            &hcldec.AttrSpec{Name: "output_filename", Type: cty.String, Required: false},
-		"image_type":                 &hcldec.AttrSpec{Name: "utils.KnownImageType", Type: cty.String, Required: false},
+		"image_type":                 &hcldec.AttrSpec{Name: "image_type", Type: cty.String, Required: false},
 		"image_mounts":               &hcldec.AttrSpec{Name: "image_mounts", Type: cty.List(cty.String), Required: false},
 		"mount_path":                 &hcldec.AttrSpec{Name: "mount_path", Type: cty.String, Required: false},
 		"chroot_mounts":              &hcldec.BlockListSpec{TypeName: "chroot_mounts", Nested: &hcldec.AttrSpec{Name: "chroot_mounts", Type: cty.List(cty.String), Required: false}},
