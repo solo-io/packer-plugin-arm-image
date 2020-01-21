@@ -1,0 +1,22 @@
+name: Build and publish docker image to registry
+on:
+  push:
+    branches:
+      - lyftmaster
+    tags:
+      - '*'
+jobs:
+  build-and-publish-docker-image:
+    name: Build and publish docker image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Publish to Registry
+        uses: elgohr/Publish-Docker-Github-Action@2.8
+        with:
+          name: ${{ github.repository }}/packer-builder-arm
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          tag_names: true
