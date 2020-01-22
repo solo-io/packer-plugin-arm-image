@@ -1,16 +1,19 @@
+//go:generate mapstructure-to-hcl2 -type FlashConfig
+
 package postprocessor
 
 import (
 	"context"
 	"errors"
 
+	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer/helper/config"
 	"github.com/hashicorp/packer/packer"
 	"github.com/hashicorp/packer/template/interpolate"
 	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
 )
 
-type FlashConfig = struct {
+type FlashConfig struct {
 	Device         string `mapstructure:"device"`
 	NotInteractive bool   `mapstructure:"not_interactive"`
 	Verify         bool   `mapstructure:"verify"`
@@ -22,6 +25,10 @@ type Flasher struct {
 
 func NewFlasher() packer.PostProcessor {
 	return &Flasher{}
+}
+
+func (f *Flasher) ConfigSpec() hcldec.ObjectSpec {
+	return f.config.FlatMapstructure().HCL2Spec()
 }
 
 func (f *Flasher) Configure(cfgs ...interface{}) error {
