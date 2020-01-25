@@ -132,7 +132,7 @@ func (sb *StringOrBool) UnmarshalJSON(b []byte) error {
 type LSBLKDevice struct {
 	Name       string        `json:"name"`
 	Model      string        `json:"model"`
-	size       string        `json:"size"`
+	Size       string        `json:"size"`
 	Ro         StringOrBool  `json:"ro"`
 	Rm         StringOrBool  `json:"rm"`
 	DeviceUUID string        `json:"uuid"`
@@ -171,7 +171,7 @@ type LSBLKDevices struct {
 }
 
 func GetLSBLKDevices() (*LSBLKDevices, error) {
-	data, err := exec.Command("lsblk", "-b", "--output", "NAME,SIZE,RO,RM,MODEL,UUID", "--json").Output()
+	Sata, err := exec.Command("lsblk", "-b", "--output", "NAME,SIZE,RO,RM,MODEL,UUID", "--json").Output()
 	if err != nil {
 		return nil, err
 	}
