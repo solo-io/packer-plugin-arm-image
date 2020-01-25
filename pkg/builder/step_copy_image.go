@@ -50,9 +50,9 @@ func (s *stepCopyImage) copy_progress(ctx context.Context, state multistep.State
 	done := make(chan struct{})
 	defer close(done)
 	go func() {
+		defer cancel()
 		for {
 			select {
-
 			case <-time.After(time.Second):
 				if _, ok := state.GetOk(multistep.StateCancelled); ok {
 					ui.Say("Interrupt received. Cancelling copy...")
@@ -62,7 +62,6 @@ func (s *stepCopyImage) copy_progress(ctx context.Context, state multistep.State
 				return
 			}
 		}
-		cancel()
 	}()
 
 	_, err := utils.CopyWithProgress(ctx, ui, dst, src)

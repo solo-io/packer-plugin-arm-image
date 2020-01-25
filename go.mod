@@ -1,6 +1,7 @@
 module github.com/solo-io/packer-builder-arm-image
 
 require (
+	github.com/hashicorp/go-getter v1.3.1-0.20190906090232-a0f878cb75da
 	github.com/hashicorp/hcl/v2 v2.0.0
 	github.com/hashicorp/packer v1.5.2-0.20200120152938-0b7251a4bb5f
 	github.com/rekby/mbr v0.0.0-20151216101307-8c28b6465703

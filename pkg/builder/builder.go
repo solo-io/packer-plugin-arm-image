@@ -21,6 +21,8 @@ import (
 
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
+
+	"github.com/hashicorp/go-getter"
 )
 
 const BuilderId = "yuval-k.arm-image"
@@ -230,6 +232,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 	state.Put("wrappedCommand", packer_common.CommandWrapper(wrappedCommand))
+
+	// HACK: go-getter automatically decompreses, which hurts caching.
+	// additionally, we use native binaries to decompress which is faster anyway.
+	// disable decompressors:
+	getter.Decompressors = make(map[string]getter.Decompressor)
 
 	steps := []multistep.Step{
 		&packer_common.StepDownload{
