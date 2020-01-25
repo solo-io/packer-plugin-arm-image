@@ -107,12 +107,34 @@ func ParseUdevAdm(data []byte) (*UdevAdm, error) {
 	return &udevAdm, nil
 }
 
+type StringOrBool struct {
+	Value bool
+}
+
+func (sb *StringOrBool) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		sb.Value = (s == "1") || (strings.ToLower(s) == "true")
+		return nil
+	}
+
+	var bool_ bool
+	if err := json.Unmarshal(b, &bool_); err != nil {
+		return err
+	}
+
+	sb.Value = bool_
+	return nil
+
+	return nil
+}
+
 type LSBLKDevice struct {
 	Name       string        `json:"name"`
 	Model      string        `json:"model"`
 	size       string        `json:"size"`
-	Ro         string        `json:"ro"`
-	Rm         string        `json:"rm"`
+	Ro         StringOrBool  `json:"ro"`
+	Rm         StringOrBool  `json:"rm"`
 	DeviceUUID string        `json:"uuid"`
 	Children   []LSBLKDevice `json:"children"`
 
@@ -137,11 +159,11 @@ func (l *LSBLKDevice) UDevInfo() (*UdevAdm, error) {
 }
 
 func (l *LSBLKDevice) Readonly() bool {
-	return l.Ro == "1"
+	return l.Ro.Value
 }
 
 func (l *LSBLKDevice) Removable() bool {
-	return l.Rm == "1"
+	return l.Rm.Value
 }
 
 type LSBLKDevices struct {
