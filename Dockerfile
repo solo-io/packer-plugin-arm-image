@@ -3,11 +3,12 @@ RUN apt-get update -qq \
  && apt-get install -qqy git && \
  mkdir /build
 
+WORKDIR /build
+
 # if you wish to build from upstream, un comment this line, and comment lines below
 # RUN git clone --depth 1 https://github.com/solo-io/packer-builder-arm-image /build
 
 # if you wish to build from upstream, comment from here.
-WORKDIR /build
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
