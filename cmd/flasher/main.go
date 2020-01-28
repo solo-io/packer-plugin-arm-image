@@ -4,12 +4,12 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/hashicorp/packer/packer"
+	"github.com/mattn/go-tty"
+	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
 	"io/ioutil"
 	"log"
 	"os"
-
-	"github.com/hashicorp/packer/packer"
-	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
 )
 
 func main() {
@@ -28,10 +28,19 @@ func main() {
 	}
 	// Disable log output by UI
 	log.SetOutput(ioutil.Discard)
-	var ui packer.Ui = &packer.BasicUi{
+	var ui *packer.BasicUi = &packer.BasicUi{
 		Reader:      os.Stdin,
 		Writer:      os.Stdout,
 		ErrorWriter: os.Stdout,
+	}
+
+	if !flashercfg.NotInteractive {
+		if TTY, err := tty.Open(); err != nil {
+			fmt.Fprintf(os.Stderr, "No tty available: %s\n", err)
+		} else {
+			ui.TTY = TTY
+			defer TTY.Close()
+		}
 	}
 
 	if os.Geteuid() != 0 {

@@ -125,14 +125,30 @@ func (sb *StringOrBool) UnmarshalJSON(b []byte) error {
 
 	sb.Value = bool_
 	return nil
+}
 
+type StringOrInt struct {
+	Value int64
+}
+
+func (sb *StringOrInt) UnmarshalJSON(b []byte) error {
+	var s string
+	if err := json.Unmarshal(b, &s); err == nil {
+		v, err := strconv.Atoi(s)
+		sb.Value = int64(v)
+		return err
+	}
+
+	if err := json.Unmarshal(b, &sb.Value); err != nil {
+		return err
+	}
 	return nil
 }
 
 type LSBLKDevice struct {
 	Name       string        `json:"name"`
 	Model      string        `json:"model"`
-	Size       string        `json:"size"`
+	Size       StringOrInt   `json:"size"`
 	Ro         StringOrBool  `json:"ro"`
 	Rm         StringOrBool  `json:"rm"`
 	DeviceUUID string        `json:"uuid"`
