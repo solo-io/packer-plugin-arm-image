@@ -107,10 +107,21 @@ docker build -t packer-builder-arm .
 docker run \
   --rm \
   --privileged \
-  -v ${PWD}:/build \
+  -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
-  -v ${PWD}/output:/build/output \
+  -v ${PWD}/output-arm-image:/build/output-arm-image \
   packer-builder-arm build samples/raspbian_golang.json
+```
+
+Alternativly, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master:
+```
+docker run \
+  --rm \
+  --privileged \
+  -v ${PWD}:/build:ro \
+  -v ${PWD}/packer_cache:/build/packer_cache \
+  -v ${PWD}/output-arm-image:/build/output-arm-image \
+  docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm build samples/raspbian_golang.json
 ```
 
 - Flashing your image

@@ -18,7 +18,6 @@ RUN go build -o packer-builder-arm-image
 
 FROM ubuntu:eoan
 
-COPY --from=builder /build/packer-builder-arm-image /bin/packer-builder-arm-image
 RUN apt-get update -qq \
  && DEBIAN_FRONTEND=noninteractive apt-get install -qqy \
   qemu-user-static \
@@ -37,4 +36,6 @@ RUN wget https://github.com/hashicorp/packer/releases/download/nightly/packer_li
   rm /tmp/packer.zip
 WORKDIR /build
 COPY entrypoint.sh /entrypoint.sh
+
+COPY --from=builder /build/packer-builder-arm-image /bin/packer-builder-arm-image
 ENTRYPOINT ["/entrypoint.sh"]
