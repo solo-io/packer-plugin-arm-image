@@ -33,6 +33,7 @@ ENV PACKER_VERSION 1.5.2
 
 RUN wget https://github.com/hashicorp/packer/releases/download/nightly/packer_linux_amd64.zip -O /tmp/packer.zip && \
   unzip /tmp/packer.zip -d /bin && \
+  mv /bin/pkg/packer_linux_amd64 /bin/packer && \
   rm /tmp/packer.zip
 WORKDIR /build
 COPY entrypoint.sh /entrypoint.sh
