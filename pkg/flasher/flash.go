@@ -114,7 +114,7 @@ func (f *flasher) getSource() (image.Image, error) {
 
 	potentials := imageutils.GetImageFilesInCurrentDir()
 	if len(potentials) == 0 {
-		return nil, errors.New("can't find source")
+		return nil, errors.New("can't autodetect source in current directory. please use the -image flag to provide one")
 	}
 	var chosen string
 	var err error
