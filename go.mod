@@ -11,4 +11,4 @@ require (
 	gopkg.in/h2non/filetype.v1 v1.0.5
 )
 
-go 1.13
+go 1.14

@@ -42,12 +42,12 @@ sudo apt-get install -y \
     gcc
 
 # Set GO paths for vagrant user
-echo 'export GOROOT=/usr/lib/go-1.13
+echo 'export GOROOT=/usr/lib/go-1.14
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin' | tee -a /home/vagrant/.profile
 
 # Also set them while we work:
-export GOROOT=/usr/lib/go-1.13
+export GOROOT=/usr/lib/go-1.14
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
