@@ -86,6 +86,13 @@ cd packer-builder-arm-image
 vagrant up
 ```
 
+If you get an error on first start up when "`Waiting for machine to boot.`" then probably the used Vagrant base box does not come with installed VirtualBox Guest Additions. To install them automatically use:
+
+```
+vagrant plugin install vagrant-vbguest
+vagrant reload
+```
+
 To build an image edit [samples/raspbian_golang.json](samples/raspbian_golang.json) (or set `PACKERFILE` to point to your json config), and use `vagrant provision` like so:
 ```
 vagrant provision --provision-with build-image
