@@ -1,0 +1,23 @@
+FROM ubuntu:eoan
+
+RUN apt-get update -qq \
+ && DEBIAN_FRONTEND=noninteractive apt-get install -qqy \
+  qemu-user-static \
+  kpartx \
+  unzip \
+  wget \
+  curl \
+  sudo \
+ && rm -rf /var/lib/apt/lists/*
+
+ENV PACKER_VERSION 1.5.5
+
+RUN wget https://github.com/hashicorp/packer/releases/download/nightly/packer_linux_amd64.zip -O /tmp/packer.zip && \
+  unzip /tmp/packer.zip -d /bin && \
+  mv /bin/pkg/packer_linux_amd64 /bin/packer && \
+  rm /tmp/packer.zip
+WORKDIR /build
+COPY entrypoint.sh /entrypoint.sh
+
+COPY ./packer-builder-arm-image /bin/packer-builder-arm-image
+ENTRYPOINT ["/entrypoint.sh"]

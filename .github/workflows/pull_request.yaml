@@ -43,8 +43,32 @@ jobs:
         go build -o packer-builder-arm-image .
         go build -o flasher github.com/solo-io/packer-builder-arm-image/cmd/flasher
         docker build -t packer-builder-arm-image .
+    - name: Artifact packer-builder-arm-image
+      uses: actions/upload-artifact@v1
+      with:
+        name: packer-builder-arm-image
+        path: ./packer-builder-arm-image
+    - name: Artifact flasher
+      uses: actions/upload-artifact@v1
+      with:
+        name: flasher
+        path: ./flasher
+  release:
+    name: release
+    needs:
+    - build
+    runs-on: ubuntu-18.04
+    if: github.event.release.tag_name
+    steps:
+    - name: Download packer-builder-arm-image
+      uses: actions/download-artifact@v1
+      with:
+        name: packer-builder-arm-image
+    - name: Download flasher
+      uses: actions/download-artifact@v1
+      with:
+        name: flasher
     - name: Release packer-builder-arm-image
-      if: github.event.release.tag_name
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,7 +78,6 @@ jobs:
         asset_name: packer-builder-arm-image
         asset_content_type: application/octet-stream
     - name: Release flasher
-      if: github.event.release.tag_name
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -64,10 +87,9 @@ jobs:
         asset_name: flasher
         asset_content_type: application/octet-stream
     - name: Push docker
-      if: github.event.release.tag_name
       env:
         QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
       run: |
         docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
-        docker tag packer-builder-arm-image quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
+        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
         docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
