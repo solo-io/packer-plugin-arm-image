@@ -42,7 +42,9 @@ jobs:
       run: |
         go build -ldflags="-s -w" -o packer-builder-arm-image .
         go build -ldflags="-s -w" -o flasher github.com/solo-io/packer-builder-arm-image/cmd/flasher
-        docker build -t packer-builder-arm-image .
+    - name: Test
+      run: |
+        go test ./...
     - name: Artifact packer-builder-arm-image
       uses: actions/upload-artifact@v1
       with:
