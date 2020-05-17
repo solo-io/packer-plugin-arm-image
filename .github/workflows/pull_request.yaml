@@ -40,7 +40,7 @@ jobs:
     - name: Build
       run: |
         go build -o packer-builder-arm-image .
-        go build -o flasher cmd/flasher/flasher
+        go build -o flasher github.com/solo-io/packer-builder-arm-image/cmd/flasher
         docker build -t packer-builder-arm-image .
     - name: Release packer-builder-arm-image
       if: github.event.release.tag_name
@@ -66,7 +66,6 @@ jobs:
       if: github.event.release.tag_name
       env:
         QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
-      uses: actions/upload-release-asset@v1
       run: |
         docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
         docker tag packer-builder-arm-image quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
