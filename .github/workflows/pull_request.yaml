@@ -5,7 +5,8 @@ on:
     branches:
     - 'master'
   pull_request: {}
-
+  release:
+    types: [published]
 env:
   TAGGED_VERSION: ${{github.event.release.tag_name || '' }}
 
@@ -31,11 +32,32 @@ jobs:
         go generate ./...
         if [[ $(git status --porcelain | wc -l) -ne 0 ]]; then
           echo "Generating code produced a non-empty diff"
-          echo "Try running 'go generate ./...' then re-pushing."
+          echo "Try running 'go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2 && go generate ./...' then re-pushing."
           git status --porcelain
           git diff | cat
           exit 1;
         fi
     - name: Build
       run: |
-        go build -o packer-builder-arm-image
+        go build -o packer-builder-arm-image .
+        go build -o flasher cmd/flasher/flasher
+    - name: Release packer-builder-arm-image
+      if: github.event.release.tag_name
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./packer-builder-arm-image
+        asset_name: ./packer-builder-arm-image
+        asset_content_type: application/octet-stream
+    - name: Release flasher
+      if: github.event.release.tag_name
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./flasher
+        asset_name: flasher
+        asset_content_type: application/octet-stream
