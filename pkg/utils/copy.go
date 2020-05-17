@@ -24,15 +24,18 @@ func CopyWithProgress(ctx context.Context, ui packer.Ui, dst io.Writer, src io.R
 	} else {
 		l = NewProgressWriter()
 	}
+	// this will cancel the Copy if still in progress when we leave the function
+	defer l.Stop()
 	rdr := io.TeeReader(src, l)
 
 	copyCompleteCh := make(chan copyResult, 1)
 	go func() {
+		defer close(copyCompleteCh)
 		n, err := io.Copy(dst, rdr)
 		copyCompleteCh <- copyResult{n: n, err: err}
 	}()
 
-	progressTicker := time.NewTicker(15 * time.Second)
+	progressTicker := time.NewTicker(5 * time.Second)
 	defer progressTicker.Stop()
 
 	for {
@@ -48,7 +51,6 @@ func CopyWithProgress(ctx context.Context, ui packer.Ui, dst io.Writer, src io.R
 				ui.Message(fmt.Sprintf("Progress: %3.2f%%", progress.PercentDone))
 			}
 		case <-ctx.Done():
-			l.Stop()
 			return int64(l.TotalData()), errors.New("interrupted")
 		}
 	}

@@ -110,7 +110,9 @@ docker run \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
-  packer-builder-arm build samples/raspbian_golang.json
+  -e PACKER_CACHE_DIR=/build/packer_cache \
+  -w /build/samples/hostapd/ \
+  packer-builder-arm build raspbian_hostapd.json
 ```
 
 Alternativly, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master:
@@ -228,9 +230,9 @@ this example requires you to run the plugin without a VM, as it copies your loca
     {
       "type": "shell",
       "inline": [
-        "sed '/PasswordAuthentication/d' -i /etc/ssh/ssh_config",
-        "echo  >> /etc/ssh/ssh_config",
-        "echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config"
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
       ]
     }
   ]
