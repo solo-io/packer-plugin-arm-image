@@ -7,8 +7,6 @@ on:
   pull_request: {}
   release:
     types: [published]
-env:
-  TAGGED_VERSION: ${{github.event.release.tag_name || '' }}
 
 jobs:
   build:
@@ -61,6 +59,8 @@ jobs:
     - build
     runs-on: ubuntu-18.04
     if: github.event.release.tag_name
+    env:
+      TAGGED_VERSION: ${{github.event.release.tag_name}}
     steps:
     - uses: actions/checkout@v2
     - name: Download packer-builder-arm-image
