@@ -80,10 +80,12 @@ func (f *flasher) Flash(ctx context.Context) error {
 		}
 	}
 
+	f.ui.Say("Unmounting device " + dev.Device)
 	err = f.unmount(dev)
 	if err != nil {
 		return err
 	}
+	f.ui.Say("Flashing device " + dev.Device)
 	res, err := f.flash(ctx, imageToFlash, dev)
 	if err != nil {
 		return err
