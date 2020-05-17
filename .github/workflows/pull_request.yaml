@@ -54,7 +54,7 @@ jobs:
         name: flasher
         path: ./flasher
   test-release:
-    name: release
+    name: test-release
     needs:
     - build
     runs-on: ubuntu-18.04
@@ -71,8 +71,8 @@ jobs:
         QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
       run: |
         docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
-        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
         ls -l
+        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
         docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
   release:
     name: release
