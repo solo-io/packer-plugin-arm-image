@@ -7,8 +7,6 @@ on:
   pull_request: {}
   release:
     types: [published]
-env:
-  TAGGED_VERSION: ${{github.event.release.tag_name || '' }}
 
 jobs:
   build:
@@ -55,12 +53,35 @@ jobs:
       with:
         name: flasher
         path: ./flasher
+  test-release:
+    name: release
+    needs:
+    - build
+    runs-on: ubuntu-18.04
+    env:
+      TAGGED_VERSION: test
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download packer-builder-arm-image
+      uses: actions/download-artifact@v1
+      with:
+        name: packer-builder-arm-image
+    - name: Push docker
+      env:
+        QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
+      run: |
+        docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
+        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
+        ls -l
+        docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
   release:
     name: release
     needs:
     - build
     runs-on: ubuntu-18.04
     if: github.event.release.tag_name
+    env:
+      TAGGED_VERSION: ${{github.event.release.tag_name}}
     steps:
     - uses: actions/checkout@v2
     - name: Download packer-builder-arm-image
