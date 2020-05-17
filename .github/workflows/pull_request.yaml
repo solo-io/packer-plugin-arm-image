@@ -30,9 +30,10 @@ jobs:
       run: |
         go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2
         go generate ./...
+        go mod vendor
         if [[ $(git status --porcelain | wc -l) -ne 0 ]]; then
           echo "Generating code produced a non-empty diff"
-          echo "Try running 'go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2 && go generate ./...' then re-pushing."
+          echo "Try running 'go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2 && go generate ./... && go mod vendor' then re-pushing."
           git status --porcelain
           git diff | cat
           exit 1;
