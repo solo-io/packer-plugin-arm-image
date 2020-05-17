@@ -67,26 +67,12 @@ jobs:
       uses: actions/download-artifact@v1
       with:
         name: packer-builder-arm-image
+        path: ./
     - name: Download flasher
       uses: actions/download-artifact@v1
       with:
         name: flasher
-    - name: Push docker
-      env:
-        QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
-      run: |
-        docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
-        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
-        docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
-    - name: Release packer-builder-arm-image
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ github.event.release.upload_url }}
-        asset_path: ./packer-builder-arm-image
-        asset_name: packer-builder-arm-image
-        asset_content_type: application/octet-stream
+        path: ./
     - name: Release flasher
       uses: actions/upload-release-asset@v1
       env:
@@ -96,3 +82,19 @@ jobs:
         asset_path: ./flasher
         asset_name: flasher
         asset_content_type: application/octet-stream
+    - name: Release packer-builder-arm-image
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./packer-builder-arm-image
+        asset_name: packer-builder-arm-image
+        asset_content_type: application/octet-stream
+    - name: Push docker
+      env:
+        QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
+      run: |
+        docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
+        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
+        docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
