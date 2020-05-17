@@ -53,27 +53,6 @@ jobs:
       with:
         name: flasher
         path: ./flasher
-  test-release:
-    name: test-release
-    needs:
-    - build
-    runs-on: ubuntu-18.04
-    env:
-      TAGGED_VERSION: test
-    steps:
-    - uses: actions/checkout@v2
-    - name: Download packer-builder-arm-image
-      uses: actions/download-artifact@v1
-      with:
-        name: packer-builder-arm-image
-    - name: Push docker
-      env:
-        QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
-      run: |
-        docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
-        ls -l
-        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
-        docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
   release:
     name: release
     needs:
