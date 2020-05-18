@@ -101,13 +101,13 @@ That's it! Flash it and run!
 
 ## Running with Docker
 
-- Build the `packer-builder-arm` Docker image
+Optional: Build the `packer-builder-arm` Docker image
 
 ```
 docker build -t packer-builder-arm .
 ```
 
-- Build the `samples/raspbian_golang.json` Packer image
+Build the `samples/raspbian_golang.json` Packer image
 ```
 docker run \
   --rm \
@@ -117,10 +117,12 @@ docker run \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
   -e PACKER_CACHE_DIR=/build/packer_cache \
   -w /build/samples/hostapd/ \
-  packer-builder-arm build raspbian_hostapd.json
+  quay.io/solo-io/packer-builder-arm-image:v0.1.4.5 raspbian_hostapd.json
 ```
 
-Alternativly, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master:
+New images are published every release, so you can swap `v0.1.4.5` with your desired release.
+
+Alternatively, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master:
 ```
 docker run \
   --rm \
