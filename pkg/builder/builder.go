@@ -45,11 +45,11 @@ var (
 		{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
 	}
 
-	defaultChrootTypes = map[string][][]string{
+	defaultChrootTypes = map[utils.KnownImageType][][]string{
 		utils.RaspberryPi: defaultBase,
 		// for non systemd ones, we want to mount resolv.conf as well.
 		// this may change to not be a default.
-		utils.Unknown: append(defaultBase, [][]string{"bind", "/etc/resolv.conf", "/etc/resolv.conf"}),
+		utils.Unknown: append(defaultBase, []string{"bind", "/etc/resolv.conf", "/etc/resolv.conf"}),
 	}
 )
 
