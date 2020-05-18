@@ -35,6 +35,11 @@ Fedora:
 sudo dnf install kpartx qemu-user-static
 ```
 
+Archlinux:
+```
+pacman -S qemu-arm-static multipath-tools
+```
+
 Other commands that are used are (that should already be installed) : mount, umount, cp, ls, chroot.
 
 To resize the filesystem, the following commands are used:
