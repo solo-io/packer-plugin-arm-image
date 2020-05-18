@@ -36,13 +36,20 @@ var (
 	knownArgs = map[utils.KnownImageType][]string{
 		utils.BeagleBone: {"-cpu", "cortex-a8"},
 	}
-	defaultChrootTypes = [][]string{
+
+	defaultBase = [][]string{
 		{"proc", "proc", "/proc"},
 		{"sysfs", "sysfs", "/sys"},
 		{"bind", "/dev", "/dev"},
 		{"devpts", "devpts", "/dev/pts"},
 		{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
-		{"bind", "/etc/resolv.conf", "/etc/resolv.conf"},
+	}
+
+	defaultChrootTypes = map[string][][]string{
+		utils.RaspberryPi: defaultBase,
+		// for non systemd ones, we want to mount resolv.conf as well.
+		// this may change to not be a default.
+		utils.Unknown: append(defaultBase, [][]string{"bind", "/etc/resolv.conf", "/etc/resolv.conf"}),
 	}
 )
 
@@ -157,7 +164,10 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 	}
 
 	if len(b.config.ChrootMounts) == 0 {
-		b.config.ChrootMounts = defaultChrootTypes
+		b.config.ChrootMounts = defaultChrootTypes[utils.Unknown]
+		if imageDefaults, ok := defaultChrootTypes[b.config.ImageType]; ok {
+			b.config.ChrootMounts = imageDefaults
+		}
 	}
 
 	if len(b.config.AdditionalChrootMounts) > 0 {
