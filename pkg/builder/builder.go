@@ -46,10 +46,7 @@ var (
 	}
 
 	defaultChrootTypes = map[utils.KnownImageType][][]string{
-		utils.RaspberryPi: defaultBase,
-		// for non systemd ones, we want to mount resolv.conf as well.
-		// this may change to not be a default.
-		utils.Unknown: append(defaultBase, []string{"bind", "/etc/resolv.conf", "/etc/resolv.conf"}),
+		utils.Unknown: defaultBase,
 	}
 )
 
@@ -94,6 +91,9 @@ type Config struct {
 	// array of triplets: [type, device, mntpoint].
 	// for example: `["bind", "/run/systemd", "/run/systemd"]`
 	AdditionalChrootMounts [][]string `mapstructure:"additional_chroot_mounts"`
+
+	// Should we copy over /etc/resolv.conf from the host?
+	CopyResolvConf bool
 
 	// Should the last partition be extended? this only works for the last partition in the
 	// dos partition table, and ext filesystem
@@ -243,7 +243,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("ui", ui)
 	state.Put("wrappedCommand", packer_common.CommandWrapper(wrappedCommand))
 
-	// HACK: go-getter automatically decompreses, which hurts caching.
+	// HACK: go-getter automatically decompress, which hurts caching.
 	// additionally, we use native binaries to decompress which is faster anyway.
 	// disable decompressors:
 	getter.Decompressors = make(map[string]getter.Decompressor)
@@ -280,6 +280,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path", MountPath: b.config.MountPath},
 		&StepMountExtra{ChrootKey: "mount_path"},
 	)
+
+	if b.config.CopyResolvConf{
+		steps = append(steps,
+			&stepCopyResolvConf{ChrootKey: "mount_path"},
+	}
 
 	native := runtime.GOARCH == "arm" || runtime.GOARCH == "arm64"
 	if !native {
