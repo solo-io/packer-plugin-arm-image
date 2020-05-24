@@ -25,3 +25,11 @@ The pi will now create a new wifi access point, bridging it to the ethernet netw
 For this to work, the pi needs to be connected to your router via an ethernet cable.
 
 You shouldn't need to log-in to the pi, and as such, `local_ssh_public_key` is not strictly needed. It is used to allow secure remote access to the pi (disabling password login). if you don't care about that just remove the steps related to ssh from `build.pkg.hcl`.
+
+If you don't see the wifi network, log-in to the pi. and get hostapd logs:
+
+```
+journalctl -u hostapd
+```
+
+And if you see `rfkill: WLAN soft blocked` if you see that issue this command `sudo rfkill unblock 0`.
