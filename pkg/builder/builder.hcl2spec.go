@@ -32,6 +32,7 @@ type FlatConfig struct {
 	MountPath              *string               `mapstructure:"mount_path" cty:"mount_path"`
 	ChrootMounts           [][]string            `mapstructure:"chroot_mounts" cty:"chroot_mounts"`
 	AdditionalChrootMounts [][]string            `mapstructure:"additional_chroot_mounts" cty:"additional_chroot_mounts"`
+	ResolvConf             *ResolvConfBehavior   `mapstructure:"resolv-conf" cty:"resolv-conf"`
 	LastPartitionExtraSize *uint64               `mapstructure:"last_partition_extra_size" cty:"last_partition_extra_size"`
 	TargetImageSize        *uint64               `mapstructure:"target_image_size" cty:"target_image_size"`
 	QemuBinary             *string               `mapstructure:"qemu_binary" cty:"qemu_binary"`
@@ -72,6 +73,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"mount_path":                 &hcldec.AttrSpec{Name: "mount_path", Type: cty.String, Required: false},
 		"chroot_mounts":              &hcldec.BlockListSpec{TypeName: "chroot_mounts", Nested: &hcldec.AttrSpec{Name: "chroot_mounts", Type: cty.List(cty.String), Required: false}},
 		"additional_chroot_mounts":   &hcldec.BlockListSpec{TypeName: "additional_chroot_mounts", Nested: &hcldec.AttrSpec{Name: "additional_chroot_mounts", Type: cty.List(cty.String), Required: false}},
+		"resolv-conf":                &hcldec.AttrSpec{Name: "resolv-conf", Type: cty.String, Required: false},
 		"last_partition_extra_size":  &hcldec.AttrSpec{Name: "last_partition_extra_size", Type: cty.Number, Required: false},
 		"target_image_size":          &hcldec.AttrSpec{Name: "target_image_size", Type: cty.Number, Required: false},
 		"qemu_binary":                &hcldec.AttrSpec{Name: "qemu_binary", Type: cty.String, Required: false},
