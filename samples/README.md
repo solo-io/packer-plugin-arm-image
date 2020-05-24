@@ -20,3 +20,8 @@ docker run \
   -w /build/hostapd \
   quay.io/solo-io/packer-builder-arm-image:v0.1.5 build -var wifi_ssid=wifi_extender -var wifi_psk=$PASSWORD -var local_ssh_public_key=/config/id_rsa.pub .
 ```
+
+The pi will now create a new wifi access point, bridging it to the ethernet network.
+For this to work, the pi needs to be connected to your router via an ethernet cable.
+
+You shouldn't need to log-in to the pi, and as such, `local_ssh_public_key` is not strictly needed. It is used to allow secure remote access to the pi (disabling password login). if you don't care about that just remove the steps related to ssh from `build.pkg.hcl`.
