@@ -36,14 +36,28 @@ var (
 	knownArgs = map[utils.KnownImageType][]string{
 		utils.BeagleBone: {"-cpu", "cortex-a8"},
 	}
-	defaultChrootTypes = [][]string{
+
+	defaultBase = [][]string{
 		{"proc", "proc", "/proc"},
 		{"sysfs", "sysfs", "/sys"},
 		{"bind", "/dev", "/dev"},
 		{"devpts", "devpts", "/dev/pts"},
 		{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
-		{"bind", "/etc/resolv.conf", "/etc/resolv.conf"},
 	}
+	resolvConfBindMount = []string{"bind", "/etc/resolv.conf", "/etc/resolv.conf"}
+
+	defaultChrootTypes = map[utils.KnownImageType][][]string{
+		utils.Unknown: defaultBase,
+	}
+)
+
+type ResolvConfBehavior string
+
+const (
+	Off      ResolvConfBehavior = "off"
+	CopyHost ResolvConfBehavior = "copy-host"
+	BindHost ResolvConfBehavior = "bind-host"
+	Delete   ResolvConfBehavior = "delete"
 )
 
 type Config struct {
@@ -87,6 +101,9 @@ type Config struct {
 	// array of triplets: [type, device, mntpoint].
 	// for example: `["bind", "/run/systemd", "/run/systemd"]`
 	AdditionalChrootMounts [][]string `mapstructure:"additional_chroot_mounts"`
+
+	// Can be one of: off, copy-host, bind-host, delete. Defaults to off
+	ResolvConf ResolvConfBehavior `mapstructure:"resolv-conf"`
 
 	// Should the last partition be extended? this only works for the last partition in the
 	// dos partition table, and ext filesystem
@@ -157,11 +174,18 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 	}
 
 	if len(b.config.ChrootMounts) == 0 {
-		b.config.ChrootMounts = defaultChrootTypes
+		b.config.ChrootMounts = defaultChrootTypes[utils.Unknown]
+		if imageDefaults, ok := defaultChrootTypes[b.config.ImageType]; ok {
+			b.config.ChrootMounts = imageDefaults
+		}
 	}
 
 	if len(b.config.AdditionalChrootMounts) > 0 {
 		b.config.ChrootMounts = append(b.config.ChrootMounts, b.config.AdditionalChrootMounts...)
+	}
+
+	if b.config.ResolvConf == BindHost {
+		b.config.ChrootMounts = append(b.config.ChrootMounts, resolvConfBindMount)
 	}
 
 	if b.config.CommandWrapper == "" {
@@ -233,7 +257,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("ui", ui)
 	state.Put("wrappedCommand", packer_common.CommandWrapper(wrappedCommand))
 
-	// HACK: go-getter automatically decompreses, which hurts caching.
+	// HACK: go-getter automatically decompress, which hurts caching.
 	// additionally, we use native binaries to decompress which is faster anyway.
 	// disable decompressors:
 	getter.Decompressors = make(map[string]getter.Decompressor)
@@ -270,6 +294,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path", MountPath: b.config.MountPath},
 		&StepMountExtra{ChrootKey: "mount_path"},
 	)
+
+	if b.config.ResolvConf == CopyHost || b.config.ResolvConf == Delete {
+		steps = append(steps,
+			&stepHandleResolvConf{ChrootKey: "mount_path", Delete: b.config.ResolvConf == Delete})
+	}
 
 	native := runtime.GOARCH == "arm" || runtime.GOARCH == "arm64"
 	if !native {
