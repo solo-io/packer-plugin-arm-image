@@ -25,10 +25,6 @@ sudo DEBIAN_FRONTEND=noninteractive apt-get \
 # Provides the add-apt-repository script
 sudo apt-get install -y software-properties-common
 
-# Add the golang repo
-sudo add-apt-repository --yes ppa:longsleep/golang-backports
-sudo apt-get update
-
 # Install required packages
 sudo apt-get install -y \
     kpartx \
@@ -38,24 +34,35 @@ sudo apt-get install -y \
     curl \
     vim \
     unzip \
-    golang-go \
     gcc
 
+# Download specific Go version
+echo "Removing existing Go packages and installing Go"
+[[ -e /tmp/go ]] && rm -rf /tmp/go*
+sudo apt remove -y \
+  'golang-*'
+cd /tmp
+wget https://dl.google.com/go/go1.14.3.linux-amd64.tar.gz
+tar xf go1.14.3.linux-amd64.tar.gz
+sudo cp -r go /usr/lib/go-1.14
+rm -rf /tmp/go*
+
 # Set GO paths for vagrant user
-echo 'export GOROOT=/usr/lib/go-1.13
+echo 'export GOROOT=/usr/lib/go-1.14
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin' | tee -a /home/vagrant/.profile
 
 # Also set them while we work:
-export GOROOT=/usr/lib/go-1.13
+export GOROOT=/usr/lib/go-1.14
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
 # Download and install packer
-[[ -e /tmp/packer ]] && rm /tmp/packer
-wget https://releases.hashicorp.com/packer/1.4.5/packer_1.4.5_linux_amd64.zip \
-    -q -O /tmp/packer_1.4.5_linux_amd64.zip
+[[ -e /tmp/packer ]] && rm -rf /tmp/packer*
+wget https://releases.hashicorp.com/packer/1.5.2/packer_1.5.2_linux_amd64.zip \
+    -q -O /tmp/packer_1.5.2_linux_amd64.zip
 cd /tmp
-unzip -u packer_1.4.5_linux_amd64.zip
+unzip -u packer_1.5.2_linux_amd64.zip
 sudo cp packer /usr/local/bin
+rm -rf /tmp/packer*
 cd ..
