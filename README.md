@@ -1,12 +1,11 @@
 # Packer plugin for ARM images
-
 This plugin lets you take an existing ARM image, and modify it on your x86 machine.
 It is optimized for raspberry pi use case - MBR partition table, with the file system partition 
 being the last partition.
 
 With this plugin, you can:
 - Provision new ARM images from existing ones.
-- Use ARM binaries for provisioning ('apt-get install' for example)
+- Use ARM binaries for provisioning (`apt-get install` for example)
 - Resize the last partition (the filesystem partition in the raspberry pi) in case you need more
   space than the default.
 
@@ -14,29 +13,26 @@ Tested for Raspbian images on built on Ubuntu 19.10. It is based partly on the c
 provisioner, though the code was copied to prevent AWS dependencies.
 
 # How it works?
-
 The plugin runs the provisioners in a chroot environment.  Binary execution is done using
 `qemu-arm-static`, via `binfmt_misc`.
 
-
 ## Dependencies:
 This builder uses the following shell commands:
-- kpartx - mapping the partitons to mountable devices
-- qemu-user-static - Executing arm binaries
+- `kpartx` - mapping the partitons to mountable devices
+- `qemu-user-static` - Executing arm binaries
 
 To install the needed binaries on derivatives of the Debian Linux variant:
-
-```
+```shell
 sudo apt install kpartx qemu-user-static
 ```
 
 Fedora:
-```
+```shell
 sudo dnf install kpartx qemu-user-static
 ```
 
 Archlinux:
-```
+```shell
 pacman -S qemu-arm-static multipath-tools
 ```
 
@@ -100,15 +96,18 @@ The example config produces an image with go installed and extends the filesyste
 That's it! Flash it and run!
 
 ## Running with Docker
+### Prerequisites
+Your environment must be running docker daemon with the `devicemapper` [storage driver](https://docs.docker.com/storage/storagedriver/select-storage-driver/) as `kpartx` does not work with the newer `overlay2` prefferred driver. `devicemapper` is [not available on Docker for Mac / Windows](https://docs.docker.com/storage/storagedriver/select-storage-driver/#docker-desktop-for-mac-and-docker-desktop-for-windows).
 
-Optional: Build the `packer-builder-arm` Docker image
+### Option 1: Clone this repo and build the Docker image locally
 
-```
+Build the Docker image locally
+```shell
 docker build -t packer-builder-arm .
 ```
 
 Build the `samples/raspbian_golang.json` Packer image
-```
+```shell
 docker run \
   --rm \
   --privileged \
@@ -116,14 +115,12 @@ docker run \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
   -e PACKER_CACHE_DIR=/build/packer_cache \
-  -w /build/samples/hostapd/ \
-  quay.io/solo-io/packer-builder-arm-image:v0.1.4.5 raspbian_hostapd.json
+  packer-builder-arm samples/raspbian_golang.json
 ```
 
-New images are published every release, so you can swap `v0.1.4.5` with your desired release.
-
-Alternatively, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master:
-```
+### Option 2: Run the published Docker image
+Alternatively, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master without needing to clone this repository.
+```shell
 docker run \
   --rm \
   --privileged \
@@ -133,47 +130,42 @@ docker run \
   docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm build samples/raspbian_golang.json
 ```
 
-- Flashing your image
-
-Follow the examples in the **Flashing** section of this document.
+That's it, flash it and run!
 
 # Running Standalone
-
 ```
 packer build samples/raspbian_golang.json
 ```
 
 # Flashing
-
 We have a post-processor stage for flashing. 
 
 ## Golang flasher
-```
+```shell
 go build cmd/flasher/main.go
 ```
 
 It will auto-detect most things and guides you with questions.
 
 ## dd
-
 (Tested on MacOS)
 
-```
+```shell
 # find the identifier of the device you want to flash
 diskutil list
+
 # un-mount the disk
 diskutil unmountDisk /dev/disk2
+
 # flash the image, go for a coffee
 sudo dd bs=4m if=output-arm-image/image of=/dev/disk2
+
 # eject the disk
 diskutil eject /dev/disk2
 ```
 
 # Cookbook
-# Raspberry Pi
-
-(see full examples in contrib folder)
-Add these provisioners to:
+# Raspberry Pi Provisioners
 
 ## Enable ssh
 ```json
@@ -183,7 +175,7 @@ Add these provisioners to:
 }
 ```
 ## Set WiFi password
-set the user variables name `wifi_name` and `wifi_password`. then:
+set the user variables name `wifi_name` and `wifi_password`, then:
 
 ```json
 {
@@ -199,8 +191,9 @@ set the user variables name `wifi_name` and `wifi_password`. then:
 
 ## Add ssh key to authorized keys, enable ssh, disable password login.
 This example locks down the image to only use your 
-current ssh key. Disabling password login makes it extra secure for networked environments. Note:
-this example requires you to run the plugin without a VM, as it copies your local ssh key.
+current ssh key. Disabling password login makes it extra secure for networked environments.
+
+Note: this example requires you to run the plugin without a VM, as it copies your local ssh key.
 
 ```json
 {
@@ -248,10 +241,8 @@ this example requires you to run the plugin without a VM, as it copies your loca
 
 ## A complete example:
 See everything included in here: [contrib/pi-secure-wifi-ssh.json](contrib/pi-secure-wifi-ssh.json). Build like so:
-```
+```shell
 sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD contrib/pi-secure-wifi-ssh.json
 # or  if running from vagrant ssh:
 sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD /vagrant/contrib/pi-secure-wifi-ssh.json
 ```
-
-
