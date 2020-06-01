@@ -19,6 +19,9 @@ func GuessImageType(url string) KnownImageType {
 	if strings.Contains(url, "raspbian") {
 		return RaspberryPi
 	}
+	if strings.Contains(url, "raspios") {
+		return RaspberryPi
+	}
 
 	if strings.Contains(url, "bone") {
 		return BeagleBone
