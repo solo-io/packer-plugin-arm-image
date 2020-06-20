@@ -30,9 +30,9 @@
     {
       "type": "shell",
       "inline": [
-        "sed '/PasswordAuthentication/d' -i /etc/ssh/ssh_config",
-        "echo  >> /etc/ssh/ssh_config",
-        "echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config"
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo  >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
       ]
     }
   ]

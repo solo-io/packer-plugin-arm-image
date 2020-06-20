@@ -32,4 +32,4 @@ If you don't see the wifi network, log-in to the pi. and get hostapd logs:
 journalctl -u hostapd
 ```
 
-And if you see `rfkill: WLAN soft blocked` if you see that issue this command `sudo rfkill unblock 0`.
+And if you see `rfkill: WLAN soft blocked`, issue this command `sudo rfkill unblock 0`.
