@@ -115,7 +115,7 @@ docker run \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
   -e PACKER_CACHE_DIR=/build/packer_cache \
-  packer-builder-arm samples/raspbian_golang.json
+  packer-builder-arm build samples/raspbian_golang.json
 ```
 
 ### Option 2: Run the published Docker image
