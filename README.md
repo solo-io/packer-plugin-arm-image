@@ -130,6 +130,8 @@ docker run \
   docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm build samples/raspbian_golang.json
 ```
 
+Note: On every release docker images are published to `quay.io/solo-io/packer-builder-arm-image` as well (for example: `quay.io/solo-io/packer-builder-arm-image:v0.1.5`).
+
 That's it, flash it and run!
 
 # Running Standalone

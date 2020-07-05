@@ -8,8 +8,7 @@
     "image_type": "raspberrypi",
     "qemu_binary": "qemu-aarch64-static",
     "iso_url" : "http://cdimage.ubuntu.com/releases/20.04/release/ubuntu-20.04-preinstalled-server-arm64+raspi.img.xz",
-    "iso_checksum_type":"sha256",
-    "iso_checksum":"48167067d65c5192ffe041c9cc4958cb7fcdfd74fa15e1937a47430ed7b9de99",
+    "iso_checksum":"sha256:48167067d65c5192ffe041c9cc4958cb7fcdfd74fa15e1937a47430ed7b9de99",
     "last_partition_extra_size" : "1073741824",
     "image_mounts": ["/boot/firmware","/"],
     "chroot_mounts": [
