@@ -11,8 +11,8 @@ set -e
 # Set to false to disable auto building
 export PACKERFILE=${PACKERFILE:-samples/raspbian_golang.json}
 
-mkdir -p /home/vagrant/.packer.d/plugins
-cp /vagrant/packer-builder-arm-image /home/vagrant/.packer.d/plugins/
+sudo mkdir -p /root/.packer.d/plugins
+sudo cp /vagrant/packer-builder-arm-image /root/.packer.d/plugins/
 
 # Now build the image
 if [[ ! -f /home/vagrant/.packer.d/plugins/packer-builder-arm-image ]]; then {
