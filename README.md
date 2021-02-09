@@ -242,9 +242,9 @@ Note: this example requires you to run the plugin without a VM, as it copies you
 ```
 
 ## A complete example:
-See everything included in here: [contrib/pi-secure-wifi-ssh.json](contrib/pi-secure-wifi-ssh.json). Build like so:
+See everything included in here: [samples/pi-secure-wifi-ssh.json](samples/pi-secure-wifi-ssh.json). Build like so:
 ```shell
-sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD contrib/pi-secure-wifi-ssh.json
+sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD samples/pi-secure-wifi-ssh.json
 # or  if running from vagrant ssh:
-sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD /vagrant/contrib/pi-secure-wifi-ssh.json
+sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD /vagrant/samples/pi-secure-wifi-ssh.json
 ```
