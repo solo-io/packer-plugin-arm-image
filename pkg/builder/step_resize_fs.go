@@ -5,9 +5,9 @@ import (
 	"context"
 	"fmt"
 
-	packer_common "github.com/hashicorp/packer/common"
-	"github.com/hashicorp/packer/helper/multistep"
-	"github.com/hashicorp/packer/packer"
+	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
+	"github.com/hashicorp/packer-plugin-sdk/multistep"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
 type stepResizeFs struct {
@@ -15,7 +15,7 @@ type stepResizeFs struct {
 }
 
 func (s *stepResizeFs) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
-	wrappedCommand := state.Get("wrappedCommand").(packer_common.CommandWrapper)
+	wrappedCommand := state.Get("wrappedCommand").(packer_common_common.CommandWrapper)
 
 	// Read our value and assert that it is they type we want
 	partitions := state.Get(s.PartitionsKey).([]string)
@@ -43,13 +43,13 @@ func (s *stepResizeFs) Run(ctx context.Context, state multistep.StateBag) multis
 	return multistep.ActionContinue
 }
 
-func (s *stepResizeFs) e2fsck(ctx context.Context, wrappedCommand packer_common.CommandWrapper, dev string) error {
+func (s *stepResizeFs) e2fsck(ctx context.Context, wrappedCommand packer_common_common.CommandWrapper, dev string) error {
 	e2fsckCommand, err := wrappedCommand(fmt.Sprintf("e2fsck -y -f %s", dev))
 	if err != nil {
 		return err
 	}
 
-	cmd := packer_common.ShellCommand(e2fsckCommand)
+	cmd := packer_common_common.ShellCommand(e2fsckCommand)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
@@ -60,14 +60,14 @@ func (s *stepResizeFs) e2fsck(ctx context.Context, wrappedCommand packer_common.
 	return nil
 }
 
-func (s *stepResizeFs) resize(ctx context.Context, wrappedCommand packer_common.CommandWrapper, dev string) error {
+func (s *stepResizeFs) resize(ctx context.Context, wrappedCommand packer_common_common.CommandWrapper, dev string) error {
 
 	reizeCommand, err := wrappedCommand(fmt.Sprintf("resize2fs -f %s", dev))
 	if err != nil {
 		return err
 	}
 
-	cmd := packer_common.ShellCommand(reizeCommand)
+	cmd := packer_common_common.ShellCommand(reizeCommand)
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {

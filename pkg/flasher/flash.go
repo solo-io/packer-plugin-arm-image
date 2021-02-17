@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hashicorp/packer/helper/config"
-	"github.com/hashicorp/packer/packer"
-	"github.com/hashicorp/packer/template/interpolate"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/template/config"
+	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	imageutils "github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
 	"github.com/solo-io/packer-builder-arm-image/pkg/utils"

@@ -11,8 +11,8 @@ import (
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	"github.com/solo-io/packer-builder-arm-image/pkg/utils"
 
-	"github.com/hashicorp/packer/helper/multistep"
-	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer-plugin-sdk/multistep"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
 type stepCopyImage struct {
