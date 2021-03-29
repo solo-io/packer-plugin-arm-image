@@ -9,9 +9,9 @@ import (
 	"os/exec"
 	"syscall"
 
-	packer_common "github.com/hashicorp/packer/common"
-	"github.com/hashicorp/packer/helper/multistep"
-	"github.com/hashicorp/packer/packer"
+	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
+	"github.com/hashicorp/packer-plugin-sdk/multistep"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
 // StepMountExtra mounts the attached device.
@@ -83,7 +83,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 	ui.Say("fuser -k " + mountPath)
 	run(context.TODO(), state, "fuser -k "+mountPath+" || exit 0")
 
-	wrappedCommand := state.Get("wrappedCommand").(packer_common.CommandWrapper)
+	wrappedCommand := state.Get("wrappedCommand").(packer_common_common.CommandWrapper)
 	for len(s.mounts) > 0 {
 		var path string
 		lastIndex := len(s.mounts) - 1
@@ -97,7 +97,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		// Before attempting to unmount,
 		// check to see if path is already unmounted
 		stderr := new(bytes.Buffer)
-		cmd := packer_common.ShellCommand(grepCommand)
+		cmd := packer_common_common.ShellCommand(grepCommand)
 		cmd.Stderr = stderr
 		if err := cmd.Run(); err != nil {
 			if exitError, ok := err.(*exec.ExitError); ok {
@@ -118,7 +118,7 @@ func (s *StepMountExtra) CleanupFunc(state multistep.StateBag) error {
 		}
 
 		stderr = new(bytes.Buffer)
-		cmd = packer_common.ShellCommand(unmountCommand)
+		cmd = packer_common_common.ShellCommand(unmountCommand)
 		cmd.Stderr = stderr
 		if err := cmd.Run(); err != nil {
 			return fmt.Errorf(

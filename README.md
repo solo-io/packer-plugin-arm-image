@@ -1,6 +1,6 @@
 # Packer plugin for ARM images
 This plugin lets you take an existing ARM image, and modify it on your x86 machine.
-It is optimized for raspberry pi use case - MBR partition table, with the file system partition 
+It is optimized for raspberry pi use case - MBR partition table, with the file system partition
 being the last partition.
 
 With this plugin, you can:
@@ -54,7 +54,7 @@ This builder uses the following uses this kernel feature:
 This provisioner allows you to run packer provisioners on your ARM image locally. It does so by mounting the image on to the local file system, and then using `chroot` combined with `binfmt_misc` to the provisioners in a simulated ARM environment.
 
 # Configuration
-To use, you need to provide an existing image that we will then modify. We re-use packer's support 
+To use, you need to provide an existing image that we will then modify. We re-use packer's support
 for downloading ISOs (though the image should not be an ISO file).
 Supporting also zipped images (enabling you downloading official raspbian images directly).
 
@@ -76,7 +76,7 @@ go build
 ```
 
 ## Running with Vagrant
-This project includes a Vagrant file and helper script that build a VM run time environment. The run time environment has 
+This project includes a Vagrant file and helper script that build a VM run time environment. The run time environment has
 custom provisions to build an image in an iterative fashion (thanks to @tommie-lie for adding this feature).
 
 To use the Vagrant environment, run the following commands:
@@ -140,7 +140,7 @@ packer build samples/raspbian_golang.json
 ```
 
 # Flashing
-We have a post-processor stage for flashing. 
+We have a post-processor stage for flashing.
 
 ## Golang flasher
 ```shell
@@ -192,7 +192,7 @@ set the user variables name `wifi_name` and `wifi_password`, then:
 ```
 
 ## Add ssh key to authorized keys, enable ssh, disable password login.
-This example locks down the image to only use your 
+This example locks down the image to only use your
 current ssh key. Disabling password login makes it extra secure for networked environments.
 
 Note: this example requires you to run the plugin without a VM, as it copies your local ssh key.
@@ -207,8 +207,7 @@ Note: this example requires you to run the plugin without a VM, as it copies you
     {
       "type": "arm-image",
       "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-12-01/2017-11-29-raspbian-stretch-lite.zip",
-      "iso_checksum_type": "sha256",
-      "iso_checksum": "e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f"
+      "iso_checksum": "sha256:e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f"
     }
   ],
   "provisioners": [

@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/mattn/go-tty"
 	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
 	"io/ioutil"

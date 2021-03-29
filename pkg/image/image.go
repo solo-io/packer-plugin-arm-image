@@ -7,7 +7,7 @@ import (
 	"os"
 	"os/exec"
 
-	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 	filetype "gopkg.in/h2non/filetype.v1"
 	"gopkg.in/h2non/filetype.v1/matchers"
 

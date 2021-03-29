@@ -14,10 +14,10 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Go 1.14
+    - name: Set up Go 1.16
       uses: actions/setup-go@v2
       with:
-        go-version: 1.14
+        go-version: 1.16
     - uses: actions/cache@v1
       with:
         path: ~/go/pkg/mod
@@ -26,9 +26,12 @@ jobs:
           ${{ runner.os }}-go-
     - name: Generate code
       run: |
+        go mod download github.com/hashicorp/packer
+        go get github.com/hashicorp/packer/cmd/mapstructure-to-hcl2
         go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2
         go generate ./...
         go mod vendor
+        go mod tidy
         if [[ $(git status --porcelain | wc -l) -ne 0 ]]; then
           echo "Generating code produced a non-empty diff"
           echo "Try running 'go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2 && go generate ./... && go mod vendor' then re-pushing."

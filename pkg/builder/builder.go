@@ -13,12 +13,12 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
-	packer_common "github.com/hashicorp/packer/common"
-	"github.com/hashicorp/packer/helper/config"
-	"github.com/hashicorp/packer/helper/multistep"
-	"github.com/hashicorp/packer/packer"
-	"github.com/hashicorp/packer/template/interpolate"
-
+	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
+	"github.com/hashicorp/packer-plugin-sdk/multistep"
+	packer_common_commonsteps "github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/template/config"
+	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
 
@@ -61,10 +61,10 @@ const (
 )
 
 type Config struct {
-	packer_common.PackerConfig `mapstructure:",squash"`
+	packer_common_common.PackerConfig `mapstructure:",squash"`
 	// While arm image are not ISOs, we resuse the ISO logic as it basically has no ISO specific code.
 	// Provide the arm image in the iso_url fields.
-	packer_common.ISOConfig `mapstructure:",squash"`
+	packer_common_commonsteps.ISOConfig `mapstructure:",squash"`
 
 	// Lets you prefix all builder commands, such as with ssh for a remote build host. Defaults to "".
 	// Copied from other builders :)
@@ -255,7 +255,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("debug", b.config.PackerDebug)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
-	state.Put("wrappedCommand", packer_common.CommandWrapper(wrappedCommand))
+	state.Put("wrappedCommand", packer_common_common.CommandWrapper(wrappedCommand))
 
 	// HACK: go-getter automatically decompress, which hurts caching.
 	// additionally, we use native binaries to decompress which is faster anyway.
@@ -263,14 +263,13 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	getter.Decompressors = make(map[string]getter.Decompressor)
 
 	steps := []multistep.Step{
-		&packer_common.StepDownload{
-			Checksum:     b.config.ISOChecksum,
-			ChecksumType: b.config.ISOChecksumType,
-			Description:  "Image",
-			ResultKey:    "iso_path",
-			Url:          b.config.ISOUrls,
-			Extension:    b.config.TargetExtension,
-			TargetPath:   b.config.TargetPath,
+		&packer_common_commonsteps.StepDownload{
+			Checksum:    b.config.ISOChecksum,
+			Description: "Image",
+			ResultKey:   "iso_path",
+			Url:         b.config.ISOUrls,
+			Extension:   b.config.TargetExtension,
+			TargetPath:  b.config.TargetPath,
 		},
 		&stepCopyImage{FromKey: "iso_path", ResultKey: "imagefile", ImageOpener: image.NewImageOpener(ui)},
 	}
