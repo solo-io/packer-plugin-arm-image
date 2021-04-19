@@ -22,7 +22,7 @@ import (
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
 
-	"github.com/hashicorp/go-getter"
+	getter "github.com/hashicorp/go-getter/v2"
 )
 
 const BuilderId = "yuval-k.arm-image"
@@ -243,6 +243,13 @@ type wrappedCommandTemplate struct {
 	Command string
 }
 
+func init() {
+	// HACK: go-getter automatically decompress, which hurts caching.
+	// additionally, we use native binaries to decompress which is faster anyway.
+	// disable decompressors:
+	getter.Decompressors = map[string]getter.Decompressor{}
+}
+
 func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
 
 	wrappedCommand := func(command string) (string, error) {
@@ -256,11 +263,6 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("hook", hook)
 	state.Put("ui", ui)
 	state.Put("wrappedCommand", packer_common_common.CommandWrapper(wrappedCommand))
-
-	// HACK: go-getter automatically decompress, which hurts caching.
-	// additionally, we use native binaries to decompress which is faster anyway.
-	// disable decompressors:
-	getter.Decompressors = make(map[string]getter.Decompressor)
 
 	steps := []multistep.Step{
 		&packer_common_commonsteps.StepDownload{
