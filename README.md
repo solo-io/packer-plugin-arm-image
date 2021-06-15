@@ -1,12 +1,11 @@
 # Packer plugin for ARM images
-
 This plugin lets you take an existing ARM image, and modify it on your x86 machine.
-It is optimized for raspberry pi use case - MBR partition table, with the file system partition 
+It is optimized for raspberry pi use case - MBR partition table, with the file system partition
 being the last partition.
 
 With this plugin, you can:
 - Provision new ARM images from existing ones.
-- Use ARM binaries for provisioning ('apt-get install' for example)
+- Use ARM binaries for provisioning (`apt-get install` for example)
 - Resize the last partition (the filesystem partition in the raspberry pi) in case you need more
   space than the default.
 
@@ -14,25 +13,27 @@ Tested for Raspbian images on built on Ubuntu 19.10. It is based partly on the c
 provisioner, though the code was copied to prevent AWS dependencies.
 
 # How it works?
-
 The plugin runs the provisioners in a chroot environment.  Binary execution is done using
 `qemu-arm-static`, via `binfmt_misc`.
 
-
 ## Dependencies:
 This builder uses the following shell commands:
-- kpartx - mapping the partitons to mountable devices
-- qemu-user-static - Executing arm binaries
+- `kpartx` - mapping the partitons to mountable devices
+- `qemu-user-static` - Executing arm binaries
 
 To install the needed binaries on derivatives of the Debian Linux variant:
-
-```
+```shell
 sudo apt install kpartx qemu-user-static
 ```
 
 Fedora:
-```
+```shell
 sudo dnf install kpartx qemu-user-static
+```
+
+Archlinux:
+```shell
+pacman -S qemu-arm-static multipath-tools
 ```
 
 Other commands that are used are (that should already be installed) : mount, umount, cp, ls, chroot.
@@ -53,7 +54,7 @@ This builder uses the following uses this kernel feature:
 This provisioner allows you to run packer provisioners on your ARM image locally. It does so by mounting the image on to the local file system, and then using `chroot` combined with `binfmt_misc` to the provisioners in a simulated ARM environment.
 
 # Configuration
-To use, you need to provide an existing image that we will then modify. We re-use packer's support 
+To use, you need to provide an existing image that we will then modify. We re-use packer's support
 for downloading ISOs (though the image should not be an ISO file).
 Supporting also zipped images (enabling you downloading official raspbian images directly).
 
@@ -75,7 +76,7 @@ go build
 ```
 
 ## Running with Vagrant
-This project includes a Vagrant file and helper script that build a VM run time environment. The run time environment has 
+This project includes a Vagrant file and helper script that build a VM run time environment. The run time environment has
 custom provisions to build an image in an iterative fashion (thanks to @tommie-lie for adding this feature).
 
 To use the Vagrant environment, run the following commands:
@@ -95,65 +96,78 @@ The example config produces an image with go installed and extends the filesyste
 That's it! Flash it and run!
 
 ## Running with Docker
+### Prerequisites
+Your environment must be running docker daemon with the `devicemapper` [storage driver](https://docs.docker.com/storage/storagedriver/select-storage-driver/) as `kpartx` does not work with the newer `overlay2` prefferred driver. `devicemapper` is [not available on Docker for Mac / Windows](https://docs.docker.com/storage/storagedriver/select-storage-driver/#docker-desktop-for-mac-and-docker-desktop-for-windows).
 
-- Build the `packer-builder-arm` Docker image
+### Option 1: Clone this repo and build the Docker image locally
 
-```
+Build the Docker image locally
+```shell
 docker build -t packer-builder-arm .
 ```
 
-- Build the `samples/raspbian_golang.json` Packer image
-```
+Build the `samples/raspbian_golang.json` Packer image
+```shell
 docker run \
   --rm \
   --privileged \
-  -v ${PWD}:/build \
+  -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
-  -v ${PWD}/output:/build/output \
+  -v ${PWD}/output-arm-image:/build/output-arm-image \
+  -e PACKER_CACHE_DIR=/build/packer_cache \
   packer-builder-arm build samples/raspbian_golang.json
 ```
 
-- Flashing your image
+### Option 2: Run the published Docker image
+Alternatively, you can use the `docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm` that's built off latest master without needing to clone this repository.
+```shell
+docker run \
+  --rm \
+  --privileged \
+  -v ${PWD}:/build:ro \
+  -v ${PWD}/packer_cache:/build/packer_cache \
+  -v ${PWD}/output-arm-image:/build/output-arm-image \
+  docker.pkg.github.com/solo-io/packer-builder-arm-image/packer-builder-arm build samples/raspbian_golang.json
+```
 
-Follow the examples in the **Flashing** section of this document.
+Note: On every release docker images are published to `quay.io/solo-io/packer-builder-arm-image` as well (for example: `quay.io/solo-io/packer-builder-arm-image:v0.1.5`).
+
+That's it, flash it and run!
 
 # Running Standalone
-
 ```
 packer build samples/raspbian_golang.json
 ```
 
 # Flashing
-
-We have a post-processor stage for flashing. 
+We have a post-processor stage for flashing.
 
 ## Golang flasher
-```
+```shell
 go build cmd/flasher/main.go
 ```
 
 It will auto-detect most things and guides you with questions.
 
 ## dd
-
 (Tested on MacOS)
 
-```
+```shell
 # find the identifier of the device you want to flash
 diskutil list
+
 # un-mount the disk
 diskutil unmountDisk /dev/disk2
+
 # flash the image, go for a coffee
 sudo dd bs=4m if=output-arm-image/image of=/dev/disk2
+
 # eject the disk
 diskutil eject /dev/disk2
 ```
 
 # Cookbook
-# Raspberry Pi
-
-(see full examples in contrib folder)
-Add these provisioners to:
+# Raspberry Pi Provisioners
 
 ## Enable ssh
 ```json
@@ -163,7 +177,7 @@ Add these provisioners to:
 }
 ```
 ## Set WiFi password
-set the user variables name `wifi_name` and `wifi_password`. then:
+set the user variables name `wifi_name` and `wifi_password`, then:
 
 ```json
 {
@@ -178,9 +192,10 @@ set the user variables name `wifi_name` and `wifi_password`. then:
 ```
 
 ## Add ssh key to authorized keys, enable ssh, disable password login.
-This example locks down the image to only use your 
-current ssh key. Disabling password login makes it extra secure for networked environments. Note:
-this example requires you to run the plugin without a VM, as it copies your local ssh key.
+This example locks down the image to only use your
+current ssh key. Disabling password login makes it extra secure for networked environments.
+
+Note: this example requires you to run the plugin without a VM, as it copies your local ssh key.
 
 ```json
 {
@@ -192,8 +207,7 @@ this example requires you to run the plugin without a VM, as it copies your loca
     {
       "type": "arm-image",
       "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-12-01/2017-11-29-raspbian-stretch-lite.zip",
-      "iso_checksum_type": "sha256",
-      "iso_checksum": "e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f"
+      "iso_checksum": "sha256:e942b70072f2e83c446b9de6f202eb8f9692c06e7d92c343361340cc016e0c9f"
     }
   ],
   "provisioners": [
@@ -217,9 +231,9 @@ this example requires you to run the plugin without a VM, as it copies your loca
     {
       "type": "shell",
       "inline": [
-        "sed '/PasswordAuthentication/d' -i /etc/ssh/ssh_config",
-        "echo  >> /etc/ssh/ssh_config",
-        "echo 'PasswordAuthentication no' >> /etc/ssh/ssh_config"
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
       ]
     }
   ]
@@ -227,11 +241,9 @@ this example requires you to run the plugin without a VM, as it copies your loca
 ```
 
 ## A complete example:
-See everything included in here: [contrib/pi-secure-wifi-ssh.json](contrib/pi-secure-wifi-ssh.json). Build like so:
-```
-sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD contrib/pi-secure-wifi-ssh.json
+See everything included in here: [samples/pi-secure-wifi-ssh.json](samples/pi-secure-wifi-ssh.json). Build like so:
+```shell
+sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD samples/pi-secure-wifi-ssh.json
 # or  if running from vagrant ssh:
-sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD /vagrant/contrib/pi-secure-wifi-ssh.json
+sudo packer build  -var wifi_name=SSID -var wifi_password=PASSWORD /vagrant/samples/pi-secure-wifi-ssh.json
 ```
-
-

@@ -1,0 +1,57 @@
+{
+  "variables": {
+    "home": "{{env `HOME`}}",
+    "node_exporter_version": "0.18.1"
+  },
+  "builders": [{
+    "type": "arm-image",
+    "image_type": "raspberrypi",
+    "qemu_binary": "qemu-aarch64-static",
+    "iso_url" : "http://cdimage.ubuntu.com/releases/20.04/release/ubuntu-20.04-preinstalled-server-arm64+raspi.img.xz",
+    "iso_checksum":"sha256:48167067d65c5192ffe041c9cc4958cb7fcdfd74fa15e1937a47430ed7b9de99",
+    "last_partition_extra_size" : "1073741824",
+    "image_mounts": ["/boot/firmware","/"],
+    "chroot_mounts": [
+        ["proc", "proc", "/proc"],
+        ["sysfs", "sysfs", "/sys"],
+        ["bind", "/dev", "/dev"],
+        ["devpts", "devpts", "/dev/pts"],
+        ["binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"],
+        ["bind", "/run/resolvconf", "/run/resolvconf"]
+    ]
+  }],  
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["touch /boot/ssh"]
+    },
+    {
+      "type": "file",
+      "source": "{{user `home`}}/.ssh/id_rsa.pub",
+      "destination": "/home/pi/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo  >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
+      ]
+    },
+    {
+      "type": "shell",
+      "inline": [
+	      "apt-get update",
+	      "apt-get install -y zfs-dkms, atop",
+	      "curl -SL https://github.com/prometheus/node_exporter/releases/download/v{{user `node_exporter_version`}}/node_exporter-{{user `node_exporter_version`}}.linux-armv7.tar.gz > node_exporter.tar.gz",
+	      "sudo tar -xvf node_exporter.tar.gz -C /usr/local/bin/ --strip-components=1",
+	      "cd /etc/systemd/system/",
+              "curl -sSLo - https://raw.githubusercontent.com/prometheus/node_exporter/master/examples/systemd/node_exporter.service |sed -e 's|/etc/sysconfig/node_exporter|/etc/default/node_exporter|' |sed -e 's/^User.*//'  > node_exporter.service",
+              "curl -sSLo - https://raw.githubusercontent.com/prometheus/node_exporter/master/examples/systemd/sysconfig.node_exporter  |sed -e 's/^OPTIONS/#OPTIONS/;aOPTIONS=\"\"' >/etc/default/node_exporter",
+              "systemctl daemon-reload",
+              "systemctl enable node_exporter.service",
+              "systemctl start node_exporter.service"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+name: pull_request
+
+on:
+  push:
+    branches:
+    - 'master'
+  pull_request: {}
+  release:
+    types: [published]
+
+jobs:
+  build:
+    name: build-works
+    runs-on: ubuntu-18.04
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Go 1.16
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.16
+    - uses: actions/cache@v1
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-
+    - name: Generate code
+      run: |
+        go mod download github.com/hashicorp/packer
+        go get github.com/hashicorp/packer/cmd/mapstructure-to-hcl2
+        go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2
+        go generate ./...
+        go mod vendor
+        go mod tidy
+        if [[ $(git status --porcelain | wc -l) -ne 0 ]]; then
+          echo "Generating code produced a non-empty diff"
+          echo "Try running 'go install github.com/hashicorp/packer/cmd/mapstructure-to-hcl2 && go generate ./... && go mod vendor' then re-pushing."
+          git status --porcelain
+          git diff | cat
+          exit 1;
+        fi
+    - name: Build
+      run: |
+        go build -ldflags="-s -w" -o packer-builder-arm-image .
+        go build -ldflags="-s -w" -o flasher github.com/solo-io/packer-builder-arm-image/cmd/flasher
+    - name: Test
+      run: |
+        go test ./...
+    - name: Artifact packer-builder-arm-image
+      uses: actions/upload-artifact@v1
+      with:
+        name: packer-builder-arm-image
+        path: ./packer-builder-arm-image
+    - name: Artifact flasher
+      uses: actions/upload-artifact@v1
+      with:
+        name: flasher
+        path: ./flasher
+  release:
+    name: release
+    needs:
+    - build
+    runs-on: ubuntu-18.04
+    if: github.event.release.tag_name
+    env:
+      TAGGED_VERSION: ${{github.event.release.tag_name}}
+    steps:
+    - uses: actions/checkout@v2
+    - name: Download packer-builder-arm-image
+      uses: actions/download-artifact@v1
+      with:
+        name: packer-builder-arm-image
+        path: ./
+    - name: Download flasher
+      uses: actions/download-artifact@v1
+      with:
+        name: flasher
+        path: ./
+    - name: Release flasher
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./flasher
+        asset_name: flasher
+        asset_content_type: application/octet-stream
+    - name: Release packer-builder-arm-image
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ github.event.release.upload_url }}
+        asset_path: ./packer-builder-arm-image
+        asset_name: packer-builder-arm-image
+        asset_content_type: application/octet-stream
+    - name: Push docker
+      env:
+        QUAY_IO_PASSWORD: ${{ secrets.QUAY_IO_PASSWORD }}
+      run: |
+        docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
+        chmod +x packer-builder-arm-image
+        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
+        docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}

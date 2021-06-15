@@ -4,16 +4,23 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/mattn/go-tty"
+	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
 	"io/ioutil"
 	"log"
 	"os"
-
-	"github.com/hashicorp/packer/packer"
-	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
 )
 
 func main() {
+	// Call realMain instead of doing the work here so we can use
+	// `defer` statements within the function and have them work properly.
+	// (defers aren't called with os.Exit)
+	os.Exit(realMain())
+}
 
+// realMain is executed from main and returns the exit status to exit with.
+func realMain() int {
 	device := flag.String("device", "", "device to flash to. leave empty for auto detect")
 	image := flag.String("image", "", "image to flash. leave empty for auto detect")
 	interactive := flag.Bool("interactive", true, "use interactive mode")
@@ -28,10 +35,19 @@ func main() {
 	}
 	// Disable log output by UI
 	log.SetOutput(ioutil.Discard)
-	var ui packer.Ui = &packer.BasicUi{
+	var ui *packer.BasicUi = &packer.BasicUi{
 		Reader:      os.Stdin,
 		Writer:      os.Stdout,
 		ErrorWriter: os.Stdout,
+	}
+
+	if !flashercfg.NotInteractive {
+		if TTY, err := tty.Open(); err != nil {
+			fmt.Fprintf(os.Stderr, "No tty available: %s\n", err)
+		} else {
+			ui.TTY = TTY
+			defer TTY.Close()
+		}
 	}
 
 	if os.Geteuid() != 0 {
@@ -42,8 +58,9 @@ func main() {
 	err := flshr.Flash(context.Background())
 	if err != nil {
 		fmt.Println("error:", err)
-		os.Exit(-1)
+		return -1
 	} else {
 		ui.Say("flashed successfully")
 	}
+	return 0
 }

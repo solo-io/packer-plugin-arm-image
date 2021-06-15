@@ -1,0 +1,38 @@
+{
+  "variables": {
+    "wifi_name": "",
+    "wifi_password": "",
+    "home": "{{env `HOME`}}"
+  },
+  "builders": [{
+    "type": "arm-image",
+    "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip",
+    "iso_checksum": "sha256:12ae6e17bf95b6ba83beca61e7394e7411b45eba7e6a520f434b0748ea7370e8",
+    "last_partition_extra_size": 1073741824
+  }],  
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["touch /boot/ssh"]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "wpa_passphrase \"{{user `wifi_name`}}\" \"{{user `wifi_password`}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `home`}}/.ssh/id_rsa.pub",
+      "destination": "/home/pi/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo  >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
+      ]
+    }
+  ]
+}

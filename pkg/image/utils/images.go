@@ -12,10 +12,14 @@ const (
 	RaspberryPi KnownImageType = "raspberrypi"
 	BeagleBone  KnownImageType = "beaglebone"
 	Kali        KnownImageType = "kali"
+	Unknown     KnownImageType = ""
 )
 
 func GuessImageType(url string) KnownImageType {
 	if strings.Contains(url, "raspbian") {
+		return RaspberryPi
+	}
+	if strings.Contains(url, "raspios") {
 		return RaspberryPi
 	}
 
@@ -38,7 +42,7 @@ func GetImageFilesInCurrentDir() []string {
 	}
 
 	// optimisitic output dir for packer
-	outputFiles, err := ioutil.ReadDir("./output/")
+	outputFiles, err := ioutil.ReadDir("./output-arm-image/")
 	if err == nil {
 		files = append(files, outputFiles...)
 	}
@@ -55,6 +59,10 @@ func GetImageFilesInCurrentDir() []string {
 }
 
 func hasPotential(info os.FileInfo) bool {
+	if info.Name() == "image" {
+		// this is the default output name
+		return true
+	}
 	if GuessImageType(info.Name()) != "" {
 		return true
 	}

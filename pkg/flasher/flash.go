@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/hashicorp/packer/helper/config"
-	"github.com/hashicorp/packer/packer"
-	"github.com/hashicorp/packer/template/interpolate"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/template/config"
+	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	imageutils "github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
 	"github.com/solo-io/packer-builder-arm-image/pkg/utils"
@@ -80,10 +80,12 @@ func (f *flasher) Flash(ctx context.Context) error {
 		}
 	}
 
+	f.ui.Say("Unmounting device " + dev.Device)
 	err = f.unmount(dev)
 	if err != nil {
 		return err
 	}
+	f.ui.Say("Flashing device " + dev.Device)
 	res, err := f.flash(ctx, imageToFlash, dev)
 	if err != nil {
 		return err
@@ -114,7 +116,7 @@ func (f *flasher) getSource() (image.Image, error) {
 
 	potentials := imageutils.GetImageFilesInCurrentDir()
 	if len(potentials) == 0 {
-		return nil, errors.New("can't find source")
+		return nil, errors.New("can't autodetect source in current directory. please use the -image flag to provide one")
 	}
 	var chosen string
 	var err error

@@ -1,3 +1,5 @@
+//go:generate mapstructure-to-hcl2 -type Config
+
 package builder
 
 import (
@@ -10,14 +12,17 @@ import (
 	"runtime"
 	"strings"
 
-	packer_common "github.com/hashicorp/packer/common"
-	"github.com/hashicorp/packer/helper/config"
-	"github.com/hashicorp/packer/helper/multistep"
-	"github.com/hashicorp/packer/packer"
-	"github.com/hashicorp/packer/template/interpolate"
-
+	"github.com/hashicorp/hcl/v2/hcldec"
+	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
+	"github.com/hashicorp/packer-plugin-sdk/multistep"
+	packer_common_commonsteps "github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
+	"github.com/hashicorp/packer-plugin-sdk/template/config"
+	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image"
 	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
+
+	getter "github.com/hashicorp/go-getter/v2"
 )
 
 const BuilderId = "yuval-k.arm-image"
@@ -31,21 +36,35 @@ var (
 	knownArgs = map[utils.KnownImageType][]string{
 		utils.BeagleBone: {"-cpu", "cortex-a8"},
 	}
-	defaultChrootTypes = [][]string{
+
+	defaultBase = [][]string{
 		{"proc", "proc", "/proc"},
 		{"sysfs", "sysfs", "/sys"},
 		{"bind", "/dev", "/dev"},
 		{"devpts", "devpts", "/dev/pts"},
 		{"binfmt_misc", "binfmt_misc", "/proc/sys/fs/binfmt_misc"},
-		{"bind", "/etc/resolv.conf", "/etc/resolv.conf"},
+	}
+	resolvConfBindMount = []string{"bind", "/etc/resolv.conf", "/etc/resolv.conf"}
+
+	defaultChrootTypes = map[utils.KnownImageType][][]string{
+		utils.Unknown: defaultBase,
 	}
 )
 
+type ResolvConfBehavior string
+
+const (
+	Off      ResolvConfBehavior = "off"
+	CopyHost ResolvConfBehavior = "copy-host"
+	BindHost ResolvConfBehavior = "bind-host"
+	Delete   ResolvConfBehavior = "delete"
+)
+
 type Config struct {
-	packer_common.PackerConfig `mapstructure:",squash"`
+	packer_common_common.PackerConfig `mapstructure:",squash"`
 	// While arm image are not ISOs, we resuse the ISO logic as it basically has no ISO specific code.
 	// Provide the arm image in the iso_url fields.
-	packer_common.ISOConfig `mapstructure:",squash"`
+	packer_common_commonsteps.ISOConfig `mapstructure:",squash"`
 
 	// Lets you prefix all builder commands, such as with ssh for a remote build host. Defaults to "".
 	// Copied from other builders :)
@@ -83,6 +102,9 @@ type Config struct {
 	// for example: `["bind", "/run/systemd", "/run/systemd"]`
 	AdditionalChrootMounts [][]string `mapstructure:"additional_chroot_mounts"`
 
+	// Can be one of: off, copy-host, bind-host, delete. Defaults to off
+	ResolvConf ResolvConfBehavior `mapstructure:"resolv-conf"`
+
 	// Should the last partition be extended? this only works for the last partition in the
 	// dos partition table, and ext filesystem
 	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
@@ -116,13 +138,17 @@ func (b *Builder) autoDetectType() utils.KnownImageType {
 	return utils.GuessImageType(url)
 }
 
-func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
+func (b *Builder) ConfigSpec() hcldec.ObjectSpec {
+	return b.config.FlatMapstructure().HCL2Spec()
+}
+
+func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 	err := config.Decode(&b.config, &config.DecodeOpts{
 		Interpolate:       true,
 		InterpolateFilter: &interpolate.RenderFilter{},
 	}, cfgs...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	var errs *packer.MultiError
 	var warnings []string
@@ -148,11 +174,18 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	}
 
 	if len(b.config.ChrootMounts) == 0 {
-		b.config.ChrootMounts = defaultChrootTypes
+		b.config.ChrootMounts = defaultChrootTypes[utils.Unknown]
+		if imageDefaults, ok := defaultChrootTypes[b.config.ImageType]; ok {
+			b.config.ChrootMounts = imageDefaults
+		}
 	}
 
 	if len(b.config.AdditionalChrootMounts) > 0 {
 		b.config.ChrootMounts = append(b.config.ChrootMounts, b.config.AdditionalChrootMounts...)
+	}
+
+	if b.config.ResolvConf == BindHost {
+		b.config.ChrootMounts = append(b.config.ChrootMounts, resolvConfBindMount)
 	}
 
 	if b.config.CommandWrapper == "" {
@@ -201,13 +234,20 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, error) {
 	}
 
 	if errs != nil && len(errs.Errors) > 0 {
-		return warnings, errs
+		return nil, warnings, errs
 	}
-	return warnings, nil
+	return nil, warnings, nil
 }
 
 type wrappedCommandTemplate struct {
 	Command string
+}
+
+func init() {
+	// HACK: go-getter automatically decompress, which hurts caching.
+	// additionally, we use native binaries to decompress which is faster anyway.
+	// disable decompressors:
+	getter.Decompressors = map[string]getter.Decompressor{}
 }
 
 func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
@@ -222,17 +262,16 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	state.Put("debug", b.config.PackerDebug)
 	state.Put("hook", hook)
 	state.Put("ui", ui)
-	state.Put("wrappedCommand", packer_common.CommandWrapper(wrappedCommand))
+	state.Put("wrappedCommand", packer_common_common.CommandWrapper(wrappedCommand))
 
 	steps := []multistep.Step{
-		&packer_common.StepDownload{
-			Checksum:     b.config.ISOChecksum,
-			ChecksumType: b.config.ISOChecksumType,
-			Description:  "Image",
-			ResultKey:    "iso_path",
-			Url:          b.config.ISOUrls,
-			Extension:    b.config.TargetExtension,
-			TargetPath:   b.config.TargetPath,
+		&packer_common_commonsteps.StepDownload{
+			Checksum:    b.config.ISOChecksum,
+			Description: "Image",
+			ResultKey:   "iso_path",
+			Url:         b.config.ISOUrls,
+			Extension:   b.config.TargetExtension,
+			TargetPath:  b.config.TargetPath,
 		},
 		&stepCopyImage{FromKey: "iso_path", ResultKey: "imagefile", ImageOpener: image.NewImageOpener(ui)},
 	}
@@ -256,6 +295,11 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path", MountPath: b.config.MountPath},
 		&StepMountExtra{ChrootKey: "mount_path"},
 	)
+
+	if b.config.ResolvConf == CopyHost || b.config.ResolvConf == Delete {
+		steps = append(steps,
+			&stepHandleResolvConf{ChrootKey: "mount_path", Delete: b.config.ResolvConf == Delete})
+	}
 
 	native := runtime.GOARCH == "arm" || runtime.GOARCH == "arm64"
 	if !native {

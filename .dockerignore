@@ -4,3 +4,7 @@
 # Include only the files we need
 !/pkg
 !entrypoint.sh
+!main.go
+!go.sum
+!go.mod
+!packer-builder-arm-image

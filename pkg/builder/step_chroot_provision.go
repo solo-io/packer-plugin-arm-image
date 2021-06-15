@@ -6,10 +6,10 @@ import (
 	"context"
 	"log"
 
-	packer_common "github.com/hashicorp/packer/common"
-	"github.com/hashicorp/packer/common/chroot"
-	"github.com/hashicorp/packer/helper/multistep"
-	"github.com/hashicorp/packer/packer"
+	"github.com/hashicorp/packer-plugin-sdk/chroot"
+	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
+	"github.com/hashicorp/packer-plugin-sdk/multistep"
+	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
 // StepChrootProvision provisions the instance within a chroot.
@@ -21,7 +21,7 @@ func (s *StepChrootProvision) Run(ctx context.Context, state multistep.StateBag)
 	hook := state.Get("hook").(packer.Hook)
 	mountPath := state.Get(s.ChrootKey).(string)
 	ui := state.Get("ui").(packer.Ui)
-	wrappedCommand := state.Get("wrappedCommand").(packer_common.CommandWrapper)
+	wrappedCommand := state.Get("wrappedCommand").(packer_common_common.CommandWrapper)
 
 	// Create our communicator
 	comm := &chroot.Communicator{
