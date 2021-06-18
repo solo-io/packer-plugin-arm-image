@@ -16,7 +16,7 @@ COPY . .
 
 RUN go build -o packer-builder-arm-image
 
-FROM ubuntu:eoan
+FROM ubuntu:focal
 
 RUN apt-get update -qq \
  && DEBIAN_FRONTEND=noninteractive apt-get install -qqy \
