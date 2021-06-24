@@ -15,21 +15,22 @@ PLUGIN_DIR=${PLUGIN_DIR:-/root/.packer.d/plugins}
 sudo mkdir -p $PLUGIN_DIR
 sudo cp /vagrant/packer-builder-arm-image "$PLUGIN_DIR/"
 # Now build the image
-if sudo [[ ! -f "$PLUGIN_DIR/packer-builder-arm-image" ]]; then {
+if sudo test ! -f "$PLUGIN_DIR/packer-builder-arm-image"; then {
     echo "Error: Plugin not found. Retry build."
     exit
 } else {
     echo "Attempting to build image"
 
     PACKER_LOG=$(mktemp)
+    export PACKER_CONFIG_DIR=/root/
 
     # If there is a custom json, try that one
     # otherwise go with the default
     if [[ -f /vagrant/${PACKERFILE} ]]; then {
-        sudo packer build /vagrant/${PACKERFILE} | tee ${PACKER_LOG}
+        sudo -E packer build /vagrant/${PACKERFILE} | tee ${PACKER_LOG}
     } else {
         if [[ -f $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE} ]]; then {
-            sudo packer build $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE} | tee ${PACKER_LOG}
+            sudo -E packer build $GOPATH/src/github.com/solo-io/packer-builder-arm-image/${PACKERFILE} | tee ${PACKER_LOG}
         } else {
             echo "Error: packer build definition ${PACKERFILE} not found."
             exit

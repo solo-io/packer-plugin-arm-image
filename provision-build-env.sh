@@ -64,5 +64,5 @@ wget https://releases.hashicorp.com/packer/1.7.3/packer_1.7.3_linux_amd64.zip \
 cd /tmp
 unzip -u packer_1.7.3_linux_amd64.zip
 sudo cp packer /usr/local/bin
-rm -rf /tmp/packer*
+sudo rm -rf /tmp/packer*
 cd ..
