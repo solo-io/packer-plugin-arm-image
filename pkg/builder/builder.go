@@ -252,6 +252,7 @@ func init() {
 }
 
 func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (packer.Artifact, error) {
+	ui.Say(fmt.Sprintf("Image type: %s", b.config.ImageType))
 
 	wrappedCommand := func(command string) (string, error) {
 		b.config.ctx.Data = &wrappedCommandTemplate{Command: command}
