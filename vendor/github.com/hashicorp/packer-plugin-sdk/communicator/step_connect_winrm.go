@@ -143,7 +143,11 @@ func (s *StepConnectWinRM) waitForWinRM(state multistep.StateBag, ctx context.Co
 			if err := setNoProxy(host, port); err != nil {
 				return nil, fmt.Errorf("Error setting no_proxy: %s", err)
 			}
-			s.Config.WinRMTransportDecorator = ProxyTransportDecorator
+			if s.Config.WinRMUseNTLM {
+				s.Config.WinRMTransportDecorator = ProxyTransportDecoratorWithNTLM
+			} else {
+				s.Config.WinRMTransportDecorator = ProxyTransportDecorator
+			}
 		}
 
 		log.Println("[INFO] Attempting WinRM connection...")
@@ -236,4 +240,14 @@ func envProxyFunc() func(*url.URL) (*url.URL, error) {
 // easiest way to work around this limitation.
 func ProxyTransportDecorator() winrmcmd.Transporter {
 	return winrmcmd.NewClientWithProxyFunc(RefreshProxyFromEnvironment)
+}
+
+// ProxyTransportDecoratorWithNTLM is a custom Transporter that reloads HTTP Proxy settings at client runtime for NTLM.
+// The net/http ProxyFromEnvironment only loads the environment once, when the
+// code is initialized rather than when it's executed. This means that if your
+// wrapping code sets the NO_PROXY env var (as Packer does!), it will be
+// ignored. Re-loading the environment vars is more expensive, but it is the
+// easiest way to work around this limitation.
+func ProxyTransportDecoratorWithNTLM() winrmcmd.Transporter {
+	return winrmcmd.NewClientNTLMWithProxyFunc(RefreshProxyFromEnvironment)
 }

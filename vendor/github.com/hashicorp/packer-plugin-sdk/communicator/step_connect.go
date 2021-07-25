@@ -99,7 +99,14 @@ func (s *StepConnect) Run(ctx context.Context, state multistep.StateBag) multist
 	}
 
 	if host, err := s.Host(state); err == nil {
-		ui.Say(fmt.Sprintf("Using %s communicator to connect: %s", s.Config.Type, host))
+		switch s.Config.Type {
+		case "ssh":
+			ui.Say(fmt.Sprintf("Using SSH communicator to connect: %s", host))
+		case "winrm":
+			ui.Say(fmt.Sprintf("Using WinRM communicator to connect: %s", host))
+		default:
+			ui.Say(fmt.Sprintf("Using %s communicator to connect: %s", s.Config.Type, host))
+		}
 	} else {
 		log.Printf("[DEBUG] Unable to get address during connection step: %s", err)
 	}

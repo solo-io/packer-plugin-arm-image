@@ -1,4 +1,4 @@
-//go:generate struct-markdown
+//go:generate packer-sdc struct-markdown
 
 package commonsteps
 
@@ -65,7 +65,23 @@ type CDConfig struct {
 	//   * hdiutil (normally found in macOS)
 	//   * oscdimg (normally found in Windows as part of the Windows ADK)
 	CDFiles []string `mapstructure:"cd_files"`
-	CDLabel string   `mapstructure:"cd_label"`
+	// Key/Values to add to the CD. The keys represent the paths, and the values
+	// contents. It can be used alongside `cd_files`, which is useful to add large
+	// files without loading them into memory. If any paths are specified by both,
+	// the contents in `cd_content` will take precedence.
+	//
+	// Usage example (HCL):
+	//
+	// ```hcl
+	// cd_files = ["vendor-data"]
+	// cd_content = {
+	//   "meta-data" = jsonencode(local.instance_data)
+	//   "user-data" = templatefile("user-data", { packages = ["nginx"] })
+	// }
+	// cd_label = "cidata"
+	// ```
+	CDContent map[string]string `mapstructure:"cd_content"`
+	CDLabel   string            `mapstructure:"cd_label"`
 }
 
 func (c *CDConfig) Prepare(ctx *interpolate.Context) []error {
