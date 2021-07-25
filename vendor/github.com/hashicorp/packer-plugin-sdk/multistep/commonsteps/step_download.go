@@ -202,7 +202,7 @@ func (s *StepDownload) download(ctx context.Context, ui packersdk.Ui, source str
 		Src:              src,
 		ProgressListener: ui,
 		Pwd:              wd,
-		Mode:             getter.ModeFile,
+		GetMode:          getter.ModeFile,
 		Inplace:          true,
 	}
 

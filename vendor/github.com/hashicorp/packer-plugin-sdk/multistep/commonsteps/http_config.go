@@ -1,4 +1,4 @@
-//go:generate struct-markdown
+//go:generate packer-sdc struct-markdown
 
 package commonsteps
 
@@ -23,6 +23,21 @@ type HTTPConfig struct {
 	// started. The address and port of the HTTP server will be available as
 	// variables in `boot_command`. This is covered in more detail below.
 	HTTPDir string `mapstructure:"http_directory"`
+	// Key/Values to serve using an HTTP server. `http_content` works like and
+	// conflicts with `http_directory`. The keys represent the paths and the
+	// values contents, the keys must start with a slash, ex: `/path/to/file`.
+	// `http_content` is useful for hosting kickstart files and so on. By
+	// default this is empty, which means no HTTP server will be started. The
+	// address and port of the HTTP server will be available as variables in
+	// `boot_command`. This is covered in more detail below.
+	// Example:
+	// ```hcl
+	//   http_content = {
+	//     "/a/b"     = file("http/b")
+	//     "/foo/bar" = templatefile("${path.root}/preseed.cfg", { packages = ["nginx"] })
+	//   }
+	// ```
+	HTTPContent map[string]string `mapstructure:"http_content"`
 	// These are the minimum and maximum port to use for the HTTP server
 	// started to serve the `http_directory`. Because Packer often runs in
 	// parallel, Packer will choose a randomly available port in this range to
@@ -64,6 +79,11 @@ func (c *HTTPConfig) Prepare(ctx *interpolate.Context) []error {
 	if c.HTTPPortMin > c.HTTPPortMax {
 		errs = append(errs,
 			errors.New("http_port_min must be less than http_port_max"))
+	}
+
+	if len(c.HTTPContent) > 0 && len(c.HTTPDir) > 0 {
+		errs = append(errs,
+			errors.New("http_content cannot be used in conjunction with http_dir. Consider using the file function to load file in memory and serve them with http_content: https://www.packer.io/docs/templates/hcl_templates/functions/file/file"))
 	}
 
 	return errs
