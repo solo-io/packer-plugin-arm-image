@@ -80,7 +80,7 @@ type UdevAdm struct {
 
 func NewUdevAdm(name string) (*UdevAdm, error) {
 
-	data, err := exec.Command("/sbin/udevadm", "info", "--query=property", "--name="+name).Output()
+	data, err := exec.Command("udevadm", "info", "--query=property", "--name="+name).Output()
 	if err != nil {
 		return nil, err
 	}
