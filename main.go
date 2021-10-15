@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	server, err := plugin.Server()
+	pps := plugin.NewSet()
+	pps.RegisterBuilder(plugin.DEFAULT_NAME, builder.NewBuilder())
+	pps.RegisterPostProcessor(plugin.DEFAULT_NAME, postprocessor.NewFlasher())
+	err := pps.Run()
 	if err != nil {
 		panic(err)
 	}
-	server.RegisterBuilder(builder.NewBuilder())
-	server.RegisterPostProcessor(postprocessor.NewFlasher())
-	server.Serve()
 }
