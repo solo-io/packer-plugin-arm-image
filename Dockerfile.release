@@ -19,5 +19,5 @@ RUN wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER
 WORKDIR /build
 COPY entrypoint.sh /entrypoint.sh
 
-COPY ./packer-builder-arm-image /bin/packer-builder-arm-image
+COPY ./packer-plugin-arm-image /bin/packer-plugin-arm-image
 ENTRYPOINT ["/entrypoint.sh"]

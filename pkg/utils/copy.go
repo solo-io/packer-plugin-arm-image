@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/packer-plugin-sdk/packer"
-	"github.com/solo-io/packer-builder-arm-image/pkg/image"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image"
 )
 
 type copyResult struct {

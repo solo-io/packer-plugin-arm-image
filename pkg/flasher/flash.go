@@ -18,9 +18,9 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	"github.com/solo-io/packer-builder-arm-image/pkg/image"
-	imageutils "github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
-	"github.com/solo-io/packer-builder-arm-image/pkg/utils"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image"
+	imageutils "github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/utils"
 )
 
 const BlockSize = 512

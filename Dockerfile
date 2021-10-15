@@ -6,7 +6,7 @@ RUN apt-get update -qq \
 WORKDIR /build
 
 # if you wish to build from upstream, un comment this line, and comment lines below
-# RUN git clone --depth 1 https://github.com/solo-io/packer-builder-arm-image /build
+# RUN git clone --depth 1 https://github.com/solo-io/packer-plugin-arm-image /build
 
 # if you wish to build from upstream, comment from here.
 COPY go.mod go.sum ./
@@ -14,7 +14,7 @@ RUN go mod download
 COPY . .
 # if you wish to build from upstream, comment up to here.
 
-RUN go build -o packer-builder-arm-image
+RUN go build -o packer-plugin-arm-image
 
 FROM ubuntu:focal
 
@@ -36,5 +36,5 @@ RUN wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER
 WORKDIR /build
 COPY entrypoint.sh /entrypoint.sh
 
-COPY --from=builder /build/packer-builder-arm-image /bin/packer-builder-arm-image
+COPY --from=builder /build/packer-plugin-arm-image /bin/packer-plugin-arm-image
 ENTRYPOINT ["/entrypoint.sh"]

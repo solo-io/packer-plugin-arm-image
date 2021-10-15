@@ -19,8 +19,8 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	"github.com/solo-io/packer-builder-arm-image/pkg/image"
-	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
 
 	getter "github.com/hashicorp/go-getter/v2"
 )

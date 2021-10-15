@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/solo-io/packer-builder-arm-image/pkg/image"
-	"github.com/solo-io/packer-builder-arm-image/pkg/utils"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/utils"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
