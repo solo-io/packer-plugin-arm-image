@@ -43,6 +43,10 @@ jobs:
     - name: Test
       run: |
         go test ./...
+    - name: docker
+      run: |
+        docker build .
+        docker build -f Dockerfile.release .
     - name: Artifact packer-plugin-arm-image
       uses: actions/upload-artifact@v1
       with:
