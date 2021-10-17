@@ -10,7 +10,7 @@ import (
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/flasher"
 )
 
 type FlashConfig struct {

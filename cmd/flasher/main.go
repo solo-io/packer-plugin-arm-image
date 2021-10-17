@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/mattn/go-tty"
-	"github.com/solo-io/packer-builder-arm-image/pkg/flasher"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/flasher"
 	"io/ioutil"
 	"log"
 	"os"

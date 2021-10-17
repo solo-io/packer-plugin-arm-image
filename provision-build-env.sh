@@ -2,7 +2,7 @@
 #
 # @script          provision.sh
 # @description     provisioning script that builds environment for
-#                  https://github.com/solo-io/packer-builder-arm-image
+#                  https://github.com/solo-io/packer-plugin-arm-image
 #
 #                 By default, sets up environment, builds the plugin, and image
 ##

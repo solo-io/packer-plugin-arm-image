@@ -4,7 +4,7 @@ package builder
 
 import (
 	"github.com/hashicorp/hcl/v2/hcldec"
-	"github.com/solo-io/packer-builder-arm-image/pkg/image/utils"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
 	"github.com/zclconf/go-cty/cty"
 )
 

@@ -1,4 +1,4 @@
-module github.com/solo-io/packer-builder-arm-image
+module github.com/solo-io/packer-plugin-arm-image
 
 require (
 	github.com/hashicorp/go-getter/v2 v2.0.0
