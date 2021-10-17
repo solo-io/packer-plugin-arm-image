@@ -18,7 +18,7 @@ The plugin runs the provisioners in a chroot environment.  Binary execution is d
 
 ## Dependencies:
 This builder uses the following shell commands:
-- `kpartx` - mapping the partitons to mountable devices
+- `kpartx` - mapping the partitions to mountable devices
 - `qemu-user-static` - Executing arm binaries
 
 To install the needed binaries on derivatives of the Debian Linux variant:

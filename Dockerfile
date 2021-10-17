@@ -1,4 +1,4 @@
-FROM golang:buster AS builder
+FROM docker.io/library/golang:buster AS builder
 RUN apt-get update -qq \
  && apt-get install -qqy git && \
  mkdir /build
@@ -16,7 +16,7 @@ COPY . .
 
 RUN go build -o packer-plugin-arm-image
 
-FROM ubuntu:focal
+FROM docker.io/library/ubuntu:focal
 
 RUN apt-get update -qq \
  && DEBIAN_FRONTEND=noninteractive apt-get install -qqy \
@@ -28,7 +28,7 @@ RUN apt-get update -qq \
   sudo \
  && rm -rf /var/lib/apt/lists/*
 
-ENV PACKER_VERSION 1.6.0
+ENV PACKER_VERSION 1.7.6
 
 RUN wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip -O /tmp/packer.zip && \
   unzip /tmp/packer.zip -d /bin && \
