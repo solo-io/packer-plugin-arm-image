@@ -7,4 +7,4 @@
 !main.go
 !go.sum
 !go.mod
-!packer-builder-arm-image
+!packer-plugin-arm-image

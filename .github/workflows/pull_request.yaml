@@ -43,6 +43,10 @@ jobs:
     - name: Test
       run: |
         go test ./...
+    - name: docker
+      run: |
+        docker build .
+        docker build -f Dockerfile.release .
     - name: Artifact packer-plugin-arm-image
       uses: actions/upload-artifact@v1
       with:
@@ -97,5 +101,5 @@ jobs:
       run: |
         docker login quay.io --username "solo-io+solobot" --password $QUAY_IO_PASSWORD
         chmod +x packer-plugin-arm-image
-        docker build -t quay.io/solo-io/packer-plugin-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
-        docker push quay.io/solo-io/packer-plugin-arm-image:${TAGGED_VERSION}
+        docker build -t quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION} -f Dockerfile.release .
+        docker push quay.io/solo-io/packer-builder-arm-image:${TAGGED_VERSION}
