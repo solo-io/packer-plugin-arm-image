@@ -51,3 +51,9 @@ docker run \
   -w /build/k8s \
   quay.io/solo-io/packer-builder-arm-image:v0.2.1 build -var local_ssh_public_key=/config/id_rsa.pub .
 ```
+
+**Note**: This image doesn't result with kubernetes installed. Instead, it just sets up and image with the binaries needed to install it.
+Specifically, this example automates the [Installing kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) section of the ["Bootstrapping clusters with kubeadm"](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) kubernetes documentaiton.
+
+The reason we don't go further is that installing k8s cluster is require you to make a few decisions (CNI for example), and has a different flow if it's a new install or a node joining an existing cluster.
+Once running, follow the instructions here to install it: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
