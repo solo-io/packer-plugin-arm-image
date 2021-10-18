@@ -56,7 +56,7 @@ build {
       # adjust cgroups (see: https://github.com/kubernetes/kubernetes/issues/67310):
       "sed -i '1s/$/ cgroup_enable=cpuset cgroup_enable=memory/' /boot/cmdline.txt",
       # enable NTP for correct date/time.
-      "sudo timedatectl set-ntp True",
+      "timedatectl set-ntp True",
     ]
   }
 
