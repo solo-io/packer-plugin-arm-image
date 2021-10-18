@@ -48,6 +48,18 @@ build {
     ]
   }
 
+  provisioner "shell" {
+    inline = [
+      # remove swap, as k8s will not work with swap on... (see: https://raspberrypi.stackexchange.com/questions/84390/how-to-permanently-disable-swap-on-raspbian-stretch-lite)
+      "update-rc.d dphys-swapfile remove",
+      "apt purge dphys-swapfile",
+      # adjust cgroups (see: https://github.com/kubernetes/kubernetes/issues/67310):
+      "sed -i '1s/$/ cgroup_enable=cpuset cgroup_enable=memory/' /boot/cmdline.txt",
+      # enable NTP for correct date/time.
+      "sudo timedatectl set-ntp True",
+    ]
+  }
+
   # these fail in packer; we can figure out a way to enable these in a later time.
   # you should run them once the pi boots.
   # # run preflight checks
