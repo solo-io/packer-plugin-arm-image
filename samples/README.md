@@ -33,3 +33,27 @@ journalctl -u hostapd
 ```
 
 And if you see `rfkill: WLAN soft blocked`, issue this command `sudo rfkill unblock 0`.
+
+
+## Kubernetes
+
+Install an image that has what you need to install a k8s node:
+
+```
+docker run \
+  --rm \
+  --privileged \
+  -v ${PWD}:/build:ro \
+  -v ${PWD}/packer_cache:/build/packer_cache \
+  -v ${PWD}/output-arm-image:/build/output-arm-image \
+  -v ${HOME}/.ssh/id_rsa.pub:/config/id_rsa.pub:ro \
+  -e PACKER_CACHE_DIR=/build/packer_cache \
+  -w /build/k8s \
+  quay.io/solo-io/packer-builder-arm-image:v0.2.1 build -var local_ssh_public_key=/config/id_rsa.pub .
+```
+
+**Note**: This image doesn't result with kubernetes installed. Instead, it just sets up and image with the binaries needed to install it.
+Specifically, this example automates the [Installing kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) section of the ["Bootstrapping clusters with kubeadm"](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) kubernetes documentaiton.
+
+The reason we don't go further is that installing k8s cluster is require you to make a few decisions (CNI for example), and has a different flow if it's a new install or a node joining an existing cluster.
+Once running, follow the instructions here to install it: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
