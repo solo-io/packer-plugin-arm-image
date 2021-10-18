@@ -21,7 +21,6 @@ FROM docker.io/library/ubuntu:focal
 RUN apt-get update -qq \
  && DEBIAN_FRONTEND=noninteractive apt-get install -qqy \
   qemu-user-static \
-  kpartx \
   unzip \
   wget \
   curl \
