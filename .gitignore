@@ -4,3 +4,5 @@
 packer-builder-arm-image
 output-arm-image/
 packer_cache/
+packer-plugin-arm-image
+flasher
