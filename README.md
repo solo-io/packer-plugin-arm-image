@@ -18,22 +18,21 @@ The plugin runs the provisioners in a chroot environment.  Binary execution is d
 
 ## Dependencies:
 This builder uses the following shell commands:
-- `kpartx` - mapping the partitions to mountable devices
 - `qemu-user-static` - Executing arm binaries
 
 To install the needed binaries on derivatives of the Debian Linux variant:
 ```shell
-sudo apt install kpartx qemu-user-static
+sudo apt install qemu-user-static
 ```
 
 Fedora:
 ```shell
-sudo dnf install kpartx qemu-user-static
+sudo dnf install qemu-user-static
 ```
 
 Archlinux:
 ```shell
-pacman -S qemu-arm-static multipath-tools
+pacman -S qemu-arm-static
 ```
 
 Other commands that are used are (that should already be installed) : mount, umount, cp, ls, chroot.
@@ -97,7 +96,7 @@ That's it! Flash it and run!
 
 ## Running with Docker
 ### Prerequisites
-Your environment must be running docker daemon with the `devicemapper` [storage driver](https://docs.docker.com/storage/storagedriver/select-storage-driver/) as `kpartx` does not work with the newer `overlay2` prefferred driver. `devicemapper` is [not available on Docker for Mac / Windows](https://docs.docker.com/storage/storagedriver/select-storage-driver/#docker-desktop-for-mac-and-docker-desktop-for-windows).
+Docker needs capability of creating new devices on host machine, so it can create `/dev/loop*` and mount image into it. While it may be possible to accomplish with multiple `--device-cgroup-rule` and `--add-cap`, it's much easier to use `--privileged` flag to accomplish that. Even so, it is considered bad practice to do so, do it with extra precautions. Also because of those requirements rootless will not work for this container.
 
 ### Option 1: Clone this repo and build the Docker image locally
 
@@ -111,6 +110,7 @@ Build the `samples/raspbian_golang.json` Packer image
 docker run \
   --rm \
   --privileged \
+  -v /dev:/dev \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
@@ -124,6 +124,7 @@ Alternatively, you can use the `docker.pkg.github.com/solo-io/packer-plugin-arm-
 docker run \
   --rm \
   --privileged \
+  -v /dev:/dev \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
