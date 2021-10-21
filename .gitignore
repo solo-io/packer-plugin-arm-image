@@ -6,3 +6,4 @@ output-arm-image/
 packer_cache/
 packer-plugin-arm-image
 flasher
+pkg/builder/embed/bins/qemu-*

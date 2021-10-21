@@ -44,10 +44,11 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 	var partitions []string
 	files, err := os.ReadDir("/dev/")
 	if err != nil {
-		ui.Error(fmt.Sprintf("Couldn't list devices in /dev/"))
+		ui.Error("Couldn't list devices in /dev/")
 		s.Cleanup(state)
 		return multistep.ActionHalt
 	}
+	// TODO sort by files by partition number.
 	for _, file := range files {
 		if strings.HasPrefix(file.Name(), loop+"p") {
 			partitions = append(partitions, "/dev/"+file.Name())
