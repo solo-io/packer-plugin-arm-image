@@ -7,7 +7,7 @@ import (
 	"io/fs"
 )
 
-//go:generate bin/_download_binaries.sh
+//go:generate bins/_download_binaries.sh
 
 //go:embed bins/*.gz
 var content embed.FS
