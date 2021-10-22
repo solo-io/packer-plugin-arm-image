@@ -8,3 +8,4 @@ packer-plugin-arm-image
 flasher
 pkg/builder/embed/bins/qemu-*
 docs.zip
+.vscode/launch.json
