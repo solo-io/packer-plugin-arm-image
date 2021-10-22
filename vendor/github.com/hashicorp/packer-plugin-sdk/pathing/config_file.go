@@ -19,6 +19,19 @@ func ConfigFile() (string, error) {
 }
 
 // ConfigDir returns the configuration directory for Packer.
+// NOTE: config directory will change depending on operating system dependent
+// For Windows:
+//   PACKER_CONFIG_DIR=""           ConfigDir() => "/{homeDir()}/packer.config/
+//   PACKER_CONFIG_DIR="bar"        ConfigDir() => "/bar/packer.config/
+//
+// NOTE: Default_config_present=TRUE means that there is configuration directory at old location => $HOME/.packer.d
+// NOTE: This is not list all permutations, just some examples, view the
+// configDir function for your OS for the exact logic
+// For Unix:
+//   PACKER_CONFIG_DIR=""    Default_config_present=FALSE XDG_CONFIG_HOME=""    ConfigDir() => "$HOME/.config/packer
+//   PACKER_CONFIG_DIR="bar" Default_config_present=FALSE	XDG_CONFIG_HOME=""    ConfigDir() => "/bar/.packer.d/
+//   PACKER_CONFIG_DIR=""    Default_config_present=TRUE 	XDG_CONFIG_HOME=""    ConfigDir() => "/$HOME/.packer.d/
+//   PACKER_CONFIG_DIR=""    Default_config_present=TRUE 	XDG_CONFIG_HOME="bar" ConfigDir() => "/bar/.packer.d/
 func ConfigDir() (string, error) {
 	return configDir()
 }
@@ -68,22 +81,6 @@ func configFile() (string, error) {
 		dir = homedir
 	}
 	return filepath.Join(dir, defaultConfigFile), nil
-}
-
-func configDir() (string, error) {
-	var dir string
-	if cd := os.Getenv("PACKER_CONFIG_DIR"); cd != "" {
-		log.Printf("Detected config directory from env var: %s", cd)
-		dir = cd
-	} else {
-		homedir, err := homeDir()
-		if err != nil {
-			return "", err
-		}
-		dir = homedir
-	}
-
-	return filepath.Join(dir, defaultConfigDir), nil
 }
 
 // Given a path, check to see if it's using ~ to reference a user directory.

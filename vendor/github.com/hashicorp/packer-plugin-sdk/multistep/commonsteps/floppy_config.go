@@ -33,7 +33,24 @@ type FloppyConfig struct {
 	// characters (\\*, ?, and \[\]) are allowed. The maximum summary size of
 	// all files in the listed directories are the same as in `floppy_files`.
 	FloppyDirectories []string `mapstructure:"floppy_dirs"`
-	FloppyLabel       string   `mapstructure:"floppy_label"`
+	// Key/Values to add to the floppy disk. The keys represent the paths, and
+	// the values contents. It can be used alongside `floppy_files` or
+	// `floppy_dirs`, which is useful to add large files without loading them
+	// into memory. If any paths are specified by both, the contents in
+	// `floppy_content` will take precedence.
+	//
+	// Usage example (HCL):
+	//
+	// ```hcl
+	// floppy_files = ["vendor-data"]
+	// floppy_content = {
+	//   "meta-data" = jsonencode(local.instance_data)
+	//   "user-data" = templatefile("user-data", { packages = ["nginx"] })
+	// }
+	// floppy_label = "cidata"
+	// ```
+	FloppyContent map[string]string `mapstructure:"floppy_content"`
+	FloppyLabel   string            `mapstructure:"floppy_label"`
 }
 
 func (c *FloppyConfig) Prepare(ctx *interpolate.Context) []error {

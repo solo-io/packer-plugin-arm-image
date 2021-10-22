@@ -187,7 +187,7 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 			} else if _, err := os.Stat(qemupathincache); os.IsNotExist(err) {
 				// copy to cache folder, make executable, and use as path.
 				// also check if it exists before copying.
-				cachedFile, err := os.OpenFile(qemupathincache, os.O_RDWR|os.os.O_CREATE|O_TRUNC, 0755)
+				cachedFile, err := os.OpenFile(qemupathincache, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
 				if err != nil {
 					errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache - %w", err))
 				} else {
