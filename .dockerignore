@@ -8,3 +8,4 @@
 !go.sum
 !go.mod
 !packer-plugin-arm-image
+!version

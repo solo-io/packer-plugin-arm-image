@@ -12,6 +12,7 @@ PASSWORD=$(head -c 1024 /dev/urandom | tr -dc 'a-zA-Z0-9' | cut -c -12)
 docker run \
   --rm \
   --privileged \
+  -v /dev:/dev \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
@@ -43,6 +44,7 @@ Install an image that has what you need to install a k8s node:
 docker run \
   --rm \
   --privileged \
+  -v /dev:/dev \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
