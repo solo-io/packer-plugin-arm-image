@@ -50,6 +50,7 @@ builds:
         goarch: amd64
     binary: '{{ .ProjectName }}_v{{ .Version }}_{{ .Env.API_VERSION }}_{{ .Os }}_{{ .Arch }}'
   -
+    id: flasher
     main: ./cmd/flasher
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
