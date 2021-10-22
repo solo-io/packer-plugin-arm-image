@@ -1,5 +1,4 @@
-# This is an example goreleaser.yaml file with some defaults.
-# Make sure to check the documentation at http://goreleaser.com
+project_name: packer-plugin-arm-image
 env:
   - CGO_ENABLED=0
 before:
@@ -10,7 +9,6 @@ before:
     # As part of the release doc files are included as a separate deliverable for
     # consumption by Packer.io. To include a separate docs.zip uncomment the following command.
     - make ci-release-docs
-    - make check-generated
 builds:
   # A separated build to run the packer-plugins-check only once for a linux_amd64 binary
   -
@@ -33,6 +31,7 @@ builds:
       - amd64
     binary: '{{ .ProjectName }}_v{{ .Version }}_{{ .Env.API_VERSION }}_{{ .Os }}_{{ .Arch }}'
   -
+    id: packer-plugin-arm-image
     mod_timestamp: '{{ .CommitTimestamp }}'
     flags:
       - -trimpath #removes all file system paths from the compiled executable
@@ -84,3 +83,12 @@ release:
 
 changelog:
   skip: true
+
+#dockers:
+#  - image_templates:
+#    - quay.io/solo-io/packer-builder-arm-image:{{ .Tag }}
+#    dockerfile: Dockerfile.release
+# #   extra_files:
+# #   - config.yml
+#    goos: linux
+#    goarch: amd64
