@@ -4,8 +4,15 @@
 check-generated:
 	./tools/check_generated.sh
 
+GORELEASER=go run github.com/goreleaser/goreleaser
+
+build:
+	API_VERSION="$(shell go run . describe 2>/dev/null | jq -r .api_version)" \
+		$(GORELEASER) build --skip-validate --rm-dist
+
 release-snapshot:
-	go run github.com/goreleaser/goreleaser release --snapshot --rm-dist
+	API_VERSION="$(shell go run . describe 2>/dev/null | jq -r .api_version)" \
+		$(GORELEASER) release --snapshot --rm-dist
 
 release:
 	go run github.com/goreleaser/goreleaser release
