@@ -30,6 +30,7 @@ jobs:
         make release-snapshot
     - name: docker
       run: |
+        go build -ldflags="-s -w" -o packer-plugin-arm-image .
         docker build .
         docker build -f Dockerfile.release .
   release:
