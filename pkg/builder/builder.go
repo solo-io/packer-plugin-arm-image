@@ -172,7 +172,7 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 	path, err := exec.LookPath(b.config.QemuBinary)
 	if err != nil {
 		// not found in path, check if if we have it embedded
-		if b.config.DisableAutofetch {
+		if b.config.DisableEmbedded {
 			errs = packer.MultiErrorAppend(errs, fmt.Errorf("qemu binary not found."))
 		} else {
 			// try to fetch an embedded version

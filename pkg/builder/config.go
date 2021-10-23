@@ -67,8 +67,8 @@ type Config struct {
 	// If this is an absolute path, it will be used. Otherwise, we will look for one in your PATH
 	// and finally, try to auto fetch one from https://github.com/multiarch/qemu-user-static/
 	QemuBinary string `mapstructure:"qemu_binary"`
-	// Do not try to autofetch qemu binary
-	DisableAutofetch bool `mapstructure:"disable_autofetch"`
+	// Do not use embedded qemu.
+	DisableEmbedded bool `mapstructure:"disable_embedded"`
 	// Arguments to qemu binary. default depends on the image type. see init() function above.
 	QemuArgs []string `mapstructure:"qemu_args"`
 

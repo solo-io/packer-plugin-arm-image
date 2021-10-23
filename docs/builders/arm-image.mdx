@@ -115,7 +115,7 @@ a [communicator](/docs/templates/legacy_json_templates/communicator) can be conf
   If this is an absolute path, it will be used. Otherwise, we will look for one in your PATH
   and finally, try to auto fetch one from https://github.com/multiarch/qemu-user-static/
 
-- `disable_autofetch` (bool) - Do not try to autofetch qemu binary
+- `disable_embedded` (bool) - Do not use embedded qemu.
 
 - `qemu_args` ([]string) - Arguments to qemu binary. default depends on the image type. see init() function above.
 
