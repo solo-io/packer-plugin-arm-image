@@ -70,5 +70,7 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-
     - name: Go releaser
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         make release
