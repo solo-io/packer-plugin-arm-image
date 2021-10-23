@@ -21,7 +21,7 @@ release:
 		$(GORELEASER) release
 
 ci-release-docs:
-	go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc renderdocs -src docs -partials docs-partials/ -dst docs/
+	go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc renderdocs -src docs-src -partials docs-partials/ -dst docs/
 	/bin/sh -c "[ -d docs ] && zip -r docs.zip docs/"
 
 install-local:
@@ -30,7 +30,7 @@ install-local:
 	cp packer-plugin-arm-image $(HOME)/.packer.d/plugins/
 
 packer:
-	go install github.com/hashicorp/packer@v1.7.7
+	go install github.com/hashicorp/packer@v1.7.6
 
 testacc: install-local
 	@PACKER_ACC=1 go test -count $(COUNT) -v $(TEST) -timeout=120m
