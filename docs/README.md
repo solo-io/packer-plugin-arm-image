@@ -1,1 +1,1 @@
-Docs will move here soon. see main readme for now.
+This folder contains reference documentation for the builder.

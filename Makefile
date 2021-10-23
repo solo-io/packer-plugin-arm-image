@@ -22,6 +22,7 @@ release:
 		$(GORELEASER) release
 
 ci-release-docs:
+	rm -rf ./docs
 	go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc renderdocs -src docs-src -partials docs-partials/ -dst docs/
 	/bin/sh -c "[ -d docs ] && zip -r docs.zip docs/"
 
