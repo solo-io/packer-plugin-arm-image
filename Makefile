@@ -35,4 +35,4 @@ packer:
 	which packer || go install github.com/hashicorp/packer@v1.7.6
 
 testacc: install-local
-	@PACKER_ACC=1 go test -count $(COUNT) -v $(TEST) -timeout=120m
+	PACKER_ACC=1 go test -count $(COUNT) -v $(TEST) -timeout=120m

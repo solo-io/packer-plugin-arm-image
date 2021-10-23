@@ -26,7 +26,7 @@ func TestAccScaffoldingBuilder(t *testing.T) {
 			return nil
 		},
 		Template: testBuilderHCL2Basic,
-		Type:     "scaffolding-my-builder",
+		Type:     "arm-image-builder",
 		Check: func(buildCommand *exec.Cmd, logfile string) error {
 			if buildCommand.ProcessState != nil {
 				if buildCommand.ProcessState.ExitCode() != 0 {

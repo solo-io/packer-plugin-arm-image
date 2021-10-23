@@ -32,6 +32,14 @@ jobs:
         mv packer /usr/local/bin/packer
         # make packer
         make testacc
+    - name: Failed acceptance
+      if: ${{ failure() }}
+      run: |
+        echo pkg/builder/packer_log_image-arm-builder_basic_test.txt
+        cat pkg/builder/packer_log_image-arm-builder_basic_test.txt
+        echo
+        echo packer-plugin-arm-image/pkg/builder/image-arm-builder_basic_test.pkr.hcl
+        cat packer-plugin-arm-image/pkg/builder/image-arm-builder_basic_test.pkr.hcl
     - name: Go releaser
       run: |
         make release-snapshot
