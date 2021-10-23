@@ -19,7 +19,7 @@ docker run \
   -v ${HOME}/.ssh/id_rsa.pub:/config/id_rsa.pub:ro \
   -e PACKER_CACHE_DIR=/build/packer_cache \
   -w /build/hostapd \
-  ghcr.io/solo-io/packer-plugin-arm-image:v0.2.2 build -var wifi_ssid=wifi_extender -var wifi_psk=$PASSWORD -var local_ssh_public_key=/config/id_rsa.pub .
+  ghcr.io/solo-io/packer-plugin-arm-image:v0.2.3 build -var wifi_ssid=wifi_extender -var wifi_psk=$PASSWORD -var local_ssh_public_key=/config/id_rsa.pub .
 ```
 
 The pi will now create a new wifi access point, bridging it to the ethernet network.
@@ -51,7 +51,7 @@ docker run \
   -v ${HOME}/.ssh/id_rsa.pub:/config/id_rsa.pub:ro \
   -e PACKER_CACHE_DIR=/build/packer_cache \
   -w /build/k8s \
-  ghcr.io/solo-io/packer-plugin-arm-image:v0.2.2 build -var local_ssh_public_key=/config/id_rsa.pub .
+  ghcr.io/solo-io/packer-plugin-arm-image:v0.2.3 build -var local_ssh_public_key=/config/id_rsa.pub .
 ```
 
 or, run as root:
