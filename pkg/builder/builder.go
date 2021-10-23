@@ -1,11 +1,11 @@
-//go:generate go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc mapstructure-to-hcl2 -type Config
-
 package builder
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -13,12 +13,15 @@ import (
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
+	"github.com/hashicorp/packer-plugin-sdk/chroot"
 	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	packer_common_commonsteps "github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
+	"github.com/mitchellh/mapstructure"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/builder/embed"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/image"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
 
@@ -61,67 +64,6 @@ const (
 	Delete   ResolvConfBehavior = "delete"
 )
 
-type Config struct {
-	packer_common_common.PackerConfig `mapstructure:",squash"`
-	// While arm image are not ISOs, we resuse the ISO logic as it basically has no ISO specific code.
-	// Provide the arm image in the iso_url fields.
-	packer_common_commonsteps.ISOConfig `mapstructure:",squash"`
-
-	// Lets you prefix all builder commands, such as with ssh for a remote build host. Defaults to "".
-	// Copied from other builders :)
-	CommandWrapper string `mapstructure:"command_wrapper"`
-
-	// Output directory, where the final image will be stored.
-	// Deprecated - Use OutputFile instead
-	OutputDir string `mapstructure:"output_directory"`
-
-	// Output filename, where the final image will be stored
-	OutputFile string `mapstructure:"output_filename"`
-
-	// Image type. this is used to deduce other settings like image mounts and qemu args.
-	// If not provided, we will try to deduce it from the image url. (see autoDetectType())
-	// For list of valid values, see: pkg/image/utils/images.go
-	ImageType utils.KnownImageType `mapstructure:"image_type"`
-
-	// Where to mounts the image partitions in the chroot.
-	// first entry is the mount point of the first partition. etc..
-	ImageMounts []string `mapstructure:"image_mounts"`
-
-	// The path where the volume will be mounted. This is where the chroot environment will be.
-	// Will be a temporary directory if left unspecified.
-	MountPath string `mapstructure:"mount_path"`
-
-	// What directories mount from the host to the chroot.
-	// leave it empty for reasonable defaults.
-	// array of triplets: [type, device, mntpoint].
-	ChrootMounts [][]string `mapstructure:"chroot_mounts"`
-
-	// What directories mount from the host to the chroot, in addition to the default ones.
-	// Use this instead of `chroot_mounts` if you want to add to the existing defaults instead of
-	// overriding them
-	// array of triplets: [type, device, mntpoint].
-	// for example: `["bind", "/run/systemd", "/run/systemd"]`
-	AdditionalChrootMounts [][]string `mapstructure:"additional_chroot_mounts"`
-
-	// Can be one of: off, copy-host, bind-host, delete. Defaults to off
-	ResolvConf ResolvConfBehavior `mapstructure:"resolv-conf"`
-
-	// Should the last partition be extended? this only works for the last partition in the
-	// dos partition table, and ext filesystem
-	LastPartitionExtraSize uint64 `mapstructure:"last_partition_extra_size"`
-	// The target size of the final image. The last partiation will be extended to
-	// fill up this much room. I.e. if the generated image is 256MB and TargetImageSize
-	// is set to 384MB the last partition will be extended with an additional 128MB.
-	TargetImageSize uint64 `mapstructure:"target_image_size"`
-
-	// Qemu binary to use. default is qemu-arm-static
-	QemuBinary string `mapstructure:"qemu_binary"`
-	// Arguments to qemu binary. default depends on the image type. see init() function above.
-	QemuArgs []string `mapstructure:"qemu_args"`
-
-	ctx interpolate.Context
-}
-
 type Builder struct {
 	config Config
 	runner *multistep.BasicRunner
@@ -144,9 +86,13 @@ func (b *Builder) ConfigSpec() hcldec.ObjectSpec {
 }
 
 func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
+	var md mapstructure.Metadata
 	err := config.Decode(&b.config, &config.DecodeOpts{
-		Interpolate:       true,
-		InterpolateFilter: &interpolate.RenderFilter{},
+		Metadata:           &md,
+		PluginType:         BuilderId,
+		Interpolate:        true,
+		InterpolateContext: &b.config.ctx,
+		InterpolateFilter:  &interpolate.RenderFilter{},
 	}, cfgs...)
 	if err != nil {
 		return nil, nil, err
@@ -226,14 +172,46 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 	// convert to full path
 	path, err := exec.LookPath(b.config.QemuBinary)
 	if err != nil {
-		errs = packer.MultiErrorAppend(errs, fmt.Errorf("qemu binary not found."))
+		// not found in path, check if if we have it embedded
+		if b.config.DisableEmbedded {
+			errs = packer.MultiErrorAppend(errs, fmt.Errorf("qemu binary not found."))
+		} else {
+			// try to fetch an embedded version
+			embeddedQ, err := embed.GetEmbededQemu(b.config.QemuBinary)
+			if err != nil {
+				errs = packer.MultiErrorAppend(errs, fmt.Errorf("embedded qemu is not available - %w", err))
+			} else {
+				defer embeddedQ.Close()
+				qemupathincache, err := packer.CachePath(b.config.QemuBinary)
+				if err != nil {
+					errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache qemu - %w", err))
+				} else if _, err := os.Stat(qemupathincache); os.IsNotExist(err) {
+					// copy to cache folder, make executable, and use as path.
+					// also check if it exists before copying.
+					cachedFile, err := os.OpenFile(qemupathincache, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+					if err != nil {
+						errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache - %w", err))
+					} else {
+						defer cachedFile.Close()
+						io.Copy(cachedFile, embeddedQ)
+						b.config.QemuBinary = qemupathincache
+					}
+				} else if err == nil {
+					b.config.QemuBinary = qemupathincache
+				} else {
+					errs = packer.MultiErrorAppend(errs, fmt.Errorf("unknown cache error - %w", err))
+				}
+			}
+		}
 	} else {
+		// found it in the path, set the config to it!
 		if !strings.Contains(path, "qemu-") {
 			warnings = append(warnings, "binary doesn't look like qemu-user")
 		}
 		b.config.QemuBinary = path
 	}
 
+	log.Println("qemu path", b.config.QemuBinary)
 	if errs != nil && len(errs.Errors) > 0 {
 		return nil, warnings, errs
 	}
@@ -292,27 +270,30 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			&stepResizeFs{PartitionsKey: "partitions"},
 		)
 	}
-
+	const ChrootKey = "mount_path"
 	steps = append(steps,
-		&stepMountImage{PartitionsKey: "partitions", ResultKey: "mount_path", MountPath: b.config.MountPath},
-		&StepMountExtra{ChrootKey: "mount_path"},
+		&stepMountImage{PartitionsKey: "partitions", ResultKey: ChrootKey, MountPath: b.config.MountPath},
+		&chroot.StepMountExtra{
+			ChrootMounts: b.config.ChrootMounts,
+		},
+		&StepMountCleanup{},
 	)
 
 	if b.config.ResolvConf == CopyHost || b.config.ResolvConf == Delete {
 		steps = append(steps,
-			&stepHandleResolvConf{ChrootKey: "mount_path", Delete: b.config.ResolvConf == Delete})
+			&stepHandleResolvConf{ChrootKey: ChrootKey, Delete: b.config.ResolvConf == Delete})
 	}
 
 	native := runtime.GOARCH == "arm" || runtime.GOARCH == "arm64"
 	if !native {
 		steps = append(steps,
-			&stepQemuUserStatic{ChrootKey: "mount_path", PathToQemuInChrootKey: "qemuInChroot", Args: Args{Args: b.config.QemuArgs}},
+			&stepQemuUserStatic{ChrootKey: ChrootKey, PathToQemuInChrootKey: "qemuInChroot", Args: Args{Args: b.config.QemuArgs}},
 			&stepRegisterBinFmt{QemuPathKey: "qemuInChroot"},
 		)
 	}
 
 	steps = append(steps,
-		&StepChrootProvision{ChrootKey: "mount_path"},
+		&chroot.StepChrootProvision{},
 	)
 
 	b.runner = &multistep.BasicRunner{Steps: steps}

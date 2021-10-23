@@ -1,0 +1,7 @@
+label: dos
+label-id: 0x67ae6b94
+device: img.bin
+unit: sectors
+sector-size: 512
+
+img.bin1 : start=        2048, size=       59392, type=83

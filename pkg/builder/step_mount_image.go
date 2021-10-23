@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -40,13 +41,14 @@ func (s *stepMountImage) Run(ctx context.Context, state multistep.StateBag) mult
 			return multistep.ActionHalt
 		}
 	} else {
-		tempDir, err := ioutil.TempDir("", "")
+		tempDir, err := ioutil.TempDir("", "armimg-")
 		if err != nil {
 			ui.Error(err.Error())
 			return multistep.ActionHalt
 		}
 		s.MountPath = tempDir
 	}
+	log.Println("mounting to", s.MountPath)
 
 	mountsAndPartitions := make([]struct{ part, mnt string }, len(partitions))
 	for i := range partitions {

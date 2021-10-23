@@ -2,7 +2,11 @@
 *.img
 *.log
 packer-builder-arm-image
+packer-plugin-arm-image
 output-arm-image/
 packer_cache/
 packer-plugin-arm-image
 flasher
+docs.zip
+.vscode/launch.json
+dist/

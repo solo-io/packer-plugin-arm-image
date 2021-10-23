@@ -3,6 +3,7 @@ package builder
 import (
 	"context"
 	"os"
+	"strings"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
@@ -14,6 +15,14 @@ type stepRegisterBinFmt struct {
 	QemuPathKey string
 }
 
+// this info can be obtrained with
+// /usr/sbin/update-binfmts --display qemu-aarch64
+const (
+	mask               = `\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff`
+	qemu_arm_magic     = `\x7f\x45\x4c\x46\x01\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x28\x00`
+	qemu_aarch64_magic = `\x7f\x45\x4c\x46\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xb7\x00`
+)
+
 func (s *stepRegisterBinFmt) Run(_ context.Context, state multistep.StateBag) multistep.StepAction {
 	// Read our value and assert that it is they type we want
 	ui := state.Get("ui").(packer.Ui)
@@ -22,8 +31,17 @@ func (s *stepRegisterBinFmt) Run(_ context.Context, state multistep.StateBag) mu
 	ui.Say("Registering " + qemu + " with binfmt_misc")
 
 	registerstring_prefix := []byte{':'}
-	registerstring_prefix = append(registerstring_prefix, ([]byte(name))...)
-	registerstring_prefix = append(registerstring_prefix, []byte{':', 'M', ':', ':', '\\', 'x', '7', 'f', 'E', 'L', 'F', '\\', 'x', '0', '1', '\\', 'x', '0', '1', '\\', 'x', '0', '1', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '0', '\\', 'x', '0', '2', '\\', 'x', '0', '0', '(', '\\', 'x', '0', '0', ':', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', '0', '0', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'e', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', '\\', 'x', 'f', 'f', ':'}...)
+	registerstring_prefix = append(registerstring_prefix, []byte(name)...)
+	registerstring_prefix = append(registerstring_prefix, ':', 'M', ':', ':')
+	if strings.Contains(qemu, "64") {
+		registerstring_prefix = append(registerstring_prefix, qemu_aarch64_magic...)
+	} else {
+		registerstring_prefix = append(registerstring_prefix, qemu_arm_magic...)
+	}
+
+	registerstring_prefix = append(registerstring_prefix, ':')
+	registerstring_prefix = append(registerstring_prefix, []byte(mask)...)
+	registerstring_prefix = append(registerstring_prefix, ':')
 	registerstring := append(registerstring_prefix, ([]byte(qemu))...)
 	registerstring = append(registerstring, ':')
 	f, err := os.OpenFile("/proc/sys/fs/binfmt_misc/register", os.O_RDWR, 0)

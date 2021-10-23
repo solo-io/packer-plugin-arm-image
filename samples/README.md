@@ -12,13 +12,14 @@ PASSWORD=$(head -c 1024 /dev/urandom | tr -dc 'a-zA-Z0-9' | cut -c -12)
 docker run \
   --rm \
   --privileged \
+  -v /dev:/dev \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
   -v ${HOME}/.ssh/id_rsa.pub:/config/id_rsa.pub:ro \
   -e PACKER_CACHE_DIR=/build/packer_cache \
   -w /build/hostapd \
-  quay.io/solo-io/packer-plugin-arm-image:v0.1.5 build -var wifi_ssid=wifi_extender -var wifi_psk=$PASSWORD -var local_ssh_public_key=/config/id_rsa.pub .
+  ghcr.io/solo-io/packer-plugin-arm-image:v0.2.2 build -var wifi_ssid=wifi_extender -var wifi_psk=$PASSWORD -var local_ssh_public_key=/config/id_rsa.pub .
 ```
 
 The pi will now create a new wifi access point, bridging it to the ethernet network.
@@ -43,13 +44,19 @@ Install an image that has what you need to install a k8s node:
 docker run \
   --rm \
   --privileged \
+  -v /dev:/dev \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
   -v ${HOME}/.ssh/id_rsa.pub:/config/id_rsa.pub:ro \
   -e PACKER_CACHE_DIR=/build/packer_cache \
   -w /build/k8s \
-  quay.io/solo-io/packer-builder-arm-image:v0.2.1 build -var local_ssh_public_key=/config/id_rsa.pub .
+  ghcr.io/solo-io/packer-plugin-arm-image:v0.2.2 build -var local_ssh_public_key=/config/id_rsa.pub .
+```
+
+or, run as root:
+```
+PACKER_CONFIG_DIR=$HOME sudo -E $(which packer) build -var local_ssh_public_key=$HOME/.ssh/id_rsa.pub .
 ```
 
 **Note**: This image doesn't result with kubernetes installed. Instead, it just sets up and image with the binaries needed to install it.

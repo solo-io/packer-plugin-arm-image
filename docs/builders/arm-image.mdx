@@ -1,0 +1,232 @@
+---
+description: |
+    The `arm-image` Packer builder plugin is able to re-master arm/aarch64 images on x86 machines
+    using qemu-user-static. The builder can download a source image, runs any provisioning necessary
+    on the image including binary invocations like "apt-get".
+page_title: Arm Image Builder
+nav_title: Arm Image
+---
+
+# Arm Image Builder
+
+Type: ``
+Artifact BuilderId: `yuval-k.arm-image`
+
+The `arm-image` Packer builder plugin is able re-master image files to automate their creation.
+
+## Configuration Reference
+
+There are many configuration options available for the builder. They are
+segmented below into two categories: required and optional parameters.
+
+In addition to the options listed here,
+a [communicator](/docs/templates/legacy_json_templates/communicator) can be configured for this builder.
+
+### Required:
+
+<!-- Code generated from the comments of the ISOConfig struct in multistep/commonsteps/iso_config.go; DO NOT EDIT MANUALLY -->
+
+- `iso_checksum` (string) - The checksum for the ISO file or virtual hard drive file. The type of
+  the checksum is specified within the checksum field as a prefix, ex:
+  "md5:{$checksum}". The type of the checksum can also be omitted and
+  Packer will try to infer it based on string length. Valid values are
+  "none", "{$checksum}", "md5:{$checksum}", "sha1:{$checksum}",
+  "sha256:{$checksum}", "sha512:{$checksum}" or "file:{$path}". Here is a
+  list of valid checksum values:
+   * md5:090992ba9fd140077b0661cb75f7ce13
+   * 090992ba9fd140077b0661cb75f7ce13
+   * sha1:ebfb681885ddf1234c18094a45bbeafd91467911
+   * ebfb681885ddf1234c18094a45bbeafd91467911
+   * sha256:ed363350696a726b7932db864dda019bd2017365c9e299627830f06954643f93
+   * ed363350696a726b7932db864dda019bd2017365c9e299627830f06954643f93
+   * file:http://releases.ubuntu.com/20.04/SHA256SUMS
+   * file:file://./local/path/file.sum
+   * file:./local/path/file.sum
+   * none
+  Although the checksum will not be verified when it is set to "none",
+  this is not recommended since these files can be very large and
+  corruption does happen from time to time.
+
+- `iso_url` (string) - A URL to the ISO containing the installation image or virtual hard drive
+  (VHD or VHDX) file to clone.
+
+<!-- End of code generated from the comments of the ISOConfig struct in multistep/commonsteps/iso_config.go; -->
+
+
+
+### Optional:
+
+<!-- Code generated from the comments of the ISOConfig struct in multistep/commonsteps/iso_config.go; DO NOT EDIT MANUALLY -->
+
+- `iso_urls` ([]string) - Multiple URLs for the ISO to download. Packer will try these in order.
+  If anything goes wrong attempting to download or while downloading a
+  single URL, it will move on to the next. All URLs must point to the same
+  file (same checksum). By default this is empty and `iso_url` is used.
+  Only one of `iso_url` or `iso_urls` can be specified.
+
+- `iso_target_path` (string) - The path where the iso should be saved after download. By default will
+  go in the packer cache, with a hash of the original filename and
+  checksum as its name.
+
+- `iso_target_extension` (string) - The extension of the iso file after download. This defaults to `iso`.
+
+<!-- End of code generated from the comments of the ISOConfig struct in multistep/commonsteps/iso_config.go; -->
+
+<!-- Code generated from the comments of the Config struct in pkg/builder/config.go; DO NOT EDIT MANUALLY -->
+
+- `command_wrapper` (string) - Lets you prefix all builder commands, such as with ssh for a remote build host. Defaults to "".
+  Copied from other builders :)
+
+- `output_directory` (string) - Output directory, where the final image will be stored.
+  Deprecated - Use OutputFile instead
+
+- `output_filename` (string) - Output filename, where the final image will be stored
+
+- `image_type` (utils.KnownImageType) - Image type. this is used to deduce other settings like image mounts and qemu args.
+  If not provided, we will try to deduce it from the image url. (see autoDetectType())
+  For list of valid values, see: pkg/image/utils/images.go
+
+- `image_mounts` ([]string) - Where to mounts the image partitions in the chroot.
+  first entry is the mount point of the first partition. etc..
+
+- `mount_path` (string) - The path where the volume will be mounted. This is where the chroot environment will be.
+  Will be a temporary directory if left unspecified.
+
+- `chroot_mounts` ([][]string) - What directories mount from the host to the chroot.
+  leave it empty for reasonable defaults.
+  array of triplets: [type, device, mntpoint].
+
+- `additional_chroot_mounts` ([][]string) - What directories mount from the host to the chroot, in addition to the default ones.
+  Use this instead of `chroot_mounts` if you want to add to the existing defaults instead of
+  overriding them
+  array of triplets: [type, device, mntpoint].
+  for example: `["bind", "/run/systemd", "/run/systemd"]`
+
+- `resolv-conf` (ResolvConfBehavior) - Can be one of: off, copy-host, bind-host, delete. Defaults to off
+
+- `last_partition_extra_size` (uint64) - Should the last partition be extended? this only works for the last partition in the
+  dos partition table, and ext filesystem
+
+- `target_image_size` (uint64) - The target size of the final image. The last partition will be extended to
+  fill up this much room. I.e. if the generated image is 256MB and TargetImageSize
+  is set to 384MB the last partition will be extended with an additional 128MB.
+
+- `qemu_binary` (string) - Qemu binary to use. default is qemu-arm-static
+  If this is an absolute path, it will be used. Otherwise, we will look for one in your PATH
+  and finally, try to auto fetch one from https://github.com/multiarch/qemu-user-static/
+
+- `disable_embedded` (bool) - Do not use embedded qemu.
+
+- `qemu_args` ([]string) - Arguments to qemu binary. default depends on the image type. see init() function above.
+
+<!-- End of code generated from the comments of the Config struct in pkg/builder/config.go; -->
+
+
+
+## Basic Example
+
+Here is a basic example for Arm Image.
+
+<Tabs>
+<Tab heading="JSON">
+
+``` json
+{
+  "variables": {
+    "wifi_name": "",
+    "wifi_password": "",
+    "home": "{{env `HOME`}}"
+  },
+  "builders": [{
+    "type": "arm-image",
+    "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip",
+    "iso_checksum": "sha256:12ae6e17bf95b6ba83beca61e7394e7411b45eba7e6a520f434b0748ea7370e8",
+    "target_image_size": 3221225472
+  }],  
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["touch /boot/ssh"]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "wpa_passphrase \"{{user `wifi_name`}}\" \"{{user `wifi_password`}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `home`}}/.ssh/id_rsa.pub",
+      "destination": "/home/pi/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "chown pi:pi /home/pi/.ssh/authorized_keys",
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo  >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
+      ]
+    }
+  ]
+}
+```
+
+</Tab>
+<Tab heading="HCL2">
+
+```hcl
+variable "wifi_name" {
+  type = string
+}
+variable "wifi_password" {
+  type = string
+  sensitive = true
+}
+variable "local_ssh_public_key" {
+  type = string
+  default = "~/.ssh/id_rsa.pub"
+}
+locals {
+  ssh_key = "${pathexpand(var.local_ssh_public_key)}"
+}
+
+source "arm-image" "raspbian" {
+  iso_url = "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip"
+  iso_checksum = "sha256:12ae6e17bf95b6ba83beca61e7394e7411b45eba7e6a520f434b0748ea7370e8"
+  target_image_size = 3*1024*1024*1024
+}
+
+build {
+  sources = ["source.arm-image.raspbian"]
+
+  provisioner "shell" {
+    inline = [
+      "touch /boot/ssh",
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "wpa_passphrase \"${var.wifi_name}\" \"${var.wifi_password}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+    ]
+  }
+
+  provisioner "file" {
+    source = "${local.ssh_key}"
+    destination = "/home/pi/.ssh/authorized_keys"
+  }
+  provisioner "shell" {
+    inline = [
+        "chown pi:pi ${var.image_home_dir}/.ssh/authorized_keys",
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config",
+      ]
+  }
+
+}
+```
+
+</Tab>
+</Tabs>

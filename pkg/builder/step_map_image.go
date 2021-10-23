@@ -6,10 +6,16 @@ import (
 	"os"
 	"os/exec"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
+)
+
+var (
+	loopRe = regexp.MustCompile("/dev/loop[0-9]+")
 )
 
 type stepMapImage struct {
@@ -44,15 +50,23 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 	var partitions []string
 	files, err := os.ReadDir("/dev/")
 	if err != nil {
-		ui.Error(fmt.Sprintf("Couldn't list devices in /dev/"))
+		ui.Error("Couldn't list devices in /dev/")
 		s.Cleanup(state)
 		return multistep.ActionHalt
 	}
+	prefix := loop + "p"
 	for _, file := range files {
-		if strings.HasPrefix(file.Name(), loop+"p") {
+		if strings.HasPrefix(file.Name(), prefix) {
 			partitions = append(partitions, "/dev/"+file.Name())
 		}
 	}
+	partPrefix := "/dev/" + prefix
+	// sort by files by partition number, to make sure they match the partition map.
+	sort.Slice(partitions, func(i, j int) bool {
+		n_i, _ := strconv.Atoi(partitions[i][len(partPrefix):])
+		n_j, _ := strconv.Atoi(partitions[j][len(partPrefix):])
+		return n_i < n_j
+	})
 
 	state.Put(s.ResultKey, partitions)
 
@@ -66,8 +80,7 @@ func (s *stepMapImage) Cleanup(state multistep.StateBag) {
 	case []string:
 		if len(partitions) > 0 {
 			// Convert /dev/loop10p1 into /dev/loop10
-			re := regexp.MustCompile("/dev/loop[0-9]+")
-			loop := re.Find([]byte(partitions[0]))
+			loop := loopRe.Find([]byte(partitions[0]))
 			if loop != nil {
 				run(context.TODO(), state, fmt.Sprintf("losetup -d %s", string(loop)))
 			}

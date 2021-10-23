@@ -1,0 +1,16 @@
+vendor
+*.rpm
+*.deb
+!dummy.deb
+*.apk
+coverage.txt
+dist
+nfpm.yaml
+.DS_Store
+bin
+coverage.out
+/nfpm
+www/site
+.idea/
+testdata/acceptance/tmp/
+completions/

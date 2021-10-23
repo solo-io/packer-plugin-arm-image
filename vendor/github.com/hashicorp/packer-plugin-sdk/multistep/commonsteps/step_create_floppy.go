@@ -21,6 +21,7 @@ import (
 type StepCreateFloppy struct {
 	Files       []string
 	Directories []string
+	Content     map[string]string
 	Label       string
 
 	floppyPath string
@@ -29,7 +30,7 @@ type StepCreateFloppy struct {
 }
 
 func (s *StepCreateFloppy) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
-	if len(s.Files) == 0 && len(s.Directories) == 0 {
+	if len(s.Files) == 0 && len(s.Directories) == 0 && len(s.Content) == 0 {
 		log.Println("No floppy files specified. Floppy disk will not be made.")
 		return multistep.ActionContinue
 	}
@@ -215,6 +216,18 @@ func (s *StepCreateFloppy) Run(ctx context.Context, state multistep.StateBag) mu
 	}
 	ui.Message("Done copying paths from floppy_dirs")
 
+	// Collect files from floppy_content
+	ui.Message("Copying files from floppy_content")
+	for path, content := range s.Content {
+		err = s.AddContent(cache, path, content)
+		if err != nil {
+			state.Put("error",
+				fmt.Errorf("Error creating file for floppy: %s", err))
+			return multistep.ActionHalt
+		}
+	}
+	ui.Message("Done copying files from floppy_content")
+
 	// Set the path to the floppy so it can be used later
 	state.Put("floppy_path", s.floppyPath)
 
@@ -303,6 +316,39 @@ func (s *StepCreateFloppy) Add(dircache directoryCache, src string) error {
 	}
 
 	return filepath.Walk(src, visit)
+}
+
+func (s *StepCreateFloppy) AddContent(dircache directoryCache, path, content string) error {
+	basedirectory := filepath.Join(path, "..")
+	directory, filename := filepath.Split(filepath.ToSlash(path))
+
+	base, err := removeBase(basedirectory, filepath.FromSlash(directory))
+	if err != nil {
+		return err
+	}
+
+	wd, err := dircache(filepath.ToSlash(base))
+	if err != nil {
+		return err
+	}
+
+	entry, err := wd.AddFile(filename)
+	if err != nil {
+		return err
+	}
+
+	fatFile, err := entry.File()
+	if err != nil {
+		return err
+	}
+
+	_, err = io.WriteString(fatFile, content)
+	if err != nil {
+		return fmt.Errorf("Error writing file %s on floppy: %s", path, err)
+	}
+	s.FilesAdded[path] = true
+
+	return nil
 }
 
 func (s *StepCreateFloppy) Cleanup(multistep.StateBag) {

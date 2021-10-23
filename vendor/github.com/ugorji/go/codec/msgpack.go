@@ -22,6 +22,7 @@ import (
 	"io"
 	"math"
 	"net/rpc"
+	"reflect"
 	"time"
 )
 
@@ -169,6 +170,7 @@ var (
 type msgpackEncDriver struct {
 	noBuiltInTypes
 	encDriverNoopContainerWriter
+	encDriverNoState
 	h *MsgpackHandle
 	// x [8]byte
 	e Encoder
@@ -288,12 +290,12 @@ func (e *msgpackEncDriver) EncodeTime(t time.Time) {
 	}
 }
 
-func (e *msgpackEncDriver) EncodeExt(v interface{}, xtag uint64, ext Ext) {
+func (e *msgpackEncDriver) EncodeExt(v interface{}, basetype reflect.Type, xtag uint64, ext Ext) {
 	var bs0, bs []byte
 	if ext == SelfExt {
 		bs0 = e.e.blist.get(1024)
 		bs = bs0
-		e.e.sideEncode(v, &bs)
+		e.e.sideEncode(v, basetype, &bs)
 	} else {
 		bs = ext.WriteExt(v)
 	}
@@ -404,13 +406,11 @@ func (e *msgpackEncDriver) writeContainerLen(ct msgpackContainerType, l int) {
 
 type msgpackDecDriver struct {
 	decDriverNoopContainerReader
+	decDriverNoopNumberHelper
 	h *MsgpackHandle
-	// b      [scratchByteArrayLen]byte
-	bd     byte
-	bdRead bool
-	_      bool
+	bdAndBdread
+	_ bool
 	noBuiltInTypes
-	// _ [6]uint64 // padding
 	d Decoder
 }
 
@@ -668,6 +668,24 @@ func (d *msgpackDecDriver) nextValueBytesBdReadR(v0 []byte) (v []byte) {
 	return
 }
 
+func (d *msgpackDecDriver) decFloat4Int32() (f float32) {
+	fbits := bigen.Uint32(d.d.decRd.readn4())
+	f = math.Float32frombits(fbits)
+	if !noFrac32(fbits) {
+		d.d.errorf("assigning integer value from float32 with a fraction: %v", f)
+	}
+	return
+}
+
+func (d *msgpackDecDriver) decFloat4Int64() (f float64) {
+	fbits := bigen.Uint64(d.d.decRd.readn8())
+	f = math.Float64frombits(fbits)
+	if !noFrac64(fbits) {
+		d.d.errorf("assigning integer value from float64 with a fraction: %v", f)
+	}
+	return
+}
+
 // int can be decoded from msgpack type: intXXX or uintXXX
 func (d *msgpackDecDriver) DecodeInt64() (i int64) {
 	if d.advanceNil() {
@@ -690,6 +708,10 @@ func (d *msgpackDecDriver) DecodeInt64() (i int64) {
 		i = int64(int32(bigen.Uint32(d.d.decRd.readn4())))
 	case mpInt64:
 		i = int64(bigen.Uint64(d.d.decRd.readn8()))
+	case mpFloat:
+		i = int64(d.decFloat4Int32())
+	case mpDouble:
+		i = int64(d.decFloat4Int64())
 	default:
 		switch {
 		case d.bd >= mpPosFixNumMin && d.bd <= mpPosFixNumMax:
@@ -741,6 +763,18 @@ func (d *msgpackDecDriver) DecodeUint64() (ui uint64) {
 			ui = uint64(i)
 		} else {
 			d.d.errorf("assigning negative signed value: %v, to unsigned type", i)
+		}
+	case mpFloat:
+		if f := d.decFloat4Int32(); f >= 0 {
+			ui = uint64(f)
+		} else {
+			d.d.errorf("assigning negative float value: %v, to unsigned type", f)
+		}
+	case mpDouble:
+		if f := d.decFloat4Int64(); f >= 0 {
+			ui = uint64(f)
+		} else {
+			d.d.errorf("assigning negative float value: %v, to unsigned type", f)
 		}
 	default:
 		switch {
@@ -836,6 +870,10 @@ func (d *msgpackDecDriver) DecodeBytes(bs []byte) (bsOut []byte) {
 
 func (d *msgpackDecDriver) DecodeStringAsBytes() (s []byte) {
 	return d.DecodeBytes(nil)
+}
+
+func (d *msgpackDecDriver) descBd() string {
+	return sprintf("%v (%s)", d.bd, mpdesc(d.bd))
 }
 
 func (d *msgpackDecDriver) readNextBd() {
@@ -984,7 +1022,7 @@ func (d *msgpackDecDriver) decodeTime(clen int) (t time.Time) {
 	return
 }
 
-func (d *msgpackDecDriver) DecodeExt(rv interface{}, xtag uint64, ext Ext) {
+func (d *msgpackDecDriver) DecodeExt(rv interface{}, basetype reflect.Type, xtag uint64, ext Ext) {
 	if xtag > 0xff {
 		d.d.errorf("ext: tag must be <= 0xff; got: %v", xtag)
 	}
@@ -998,7 +1036,7 @@ func (d *msgpackDecDriver) DecodeExt(rv interface{}, xtag uint64, ext Ext) {
 		re.Tag = realxtag
 		re.setData(xbs, zerocopy)
 	} else if ext == SelfExt {
-		d.d.sideDecode(rv, xbs)
+		d.d.sideDecode(rv, basetype, xbs)
 	} else {
 		ext.ReadExt(rv, xbs)
 	}
@@ -1077,13 +1115,6 @@ func (h *MsgpackHandle) newDecDriver() decDriver {
 	return d
 }
 
-func (e *msgpackEncDriver) reset() {
-}
-
-func (d *msgpackDecDriver) reset() {
-	d.bd, d.bdRead = 0, false
-}
-
 //--------------------------------------------------
 
 type msgpackSpecRpcCodec struct {
@@ -1102,7 +1133,7 @@ func (c *msgpackSpecRpcCodec) WriteRequest(r *rpc.Request, body interface{}) err
 		bodyArr = []interface{}{body}
 	}
 	r2 := []interface{}{0, uint32(r.Seq), r.ServiceMethod, bodyArr}
-	return c.write(r2, nil, false)
+	return c.write(r2)
 }
 
 func (c *msgpackSpecRpcCodec) WriteResponse(r *rpc.Response, body interface{}) error {
@@ -1114,7 +1145,7 @@ func (c *msgpackSpecRpcCodec) WriteResponse(r *rpc.Response, body interface{}) e
 		body = nil
 	}
 	r2 := []interface{}{1, uint32(r.Seq), moe, body}
-	return c.write(r2, nil, false)
+	return c.write(r2)
 }
 
 func (c *msgpackSpecRpcCodec) ReadResponseHeader(r *rpc.Response) error {

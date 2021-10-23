@@ -22,6 +22,11 @@ func (s *stepResizeFs) Run(ctx context.Context, state multistep.StateBag) multis
 	ui := state.Get("ui").(packer.Ui)
 	ui.Say(fmt.Sprintf("partitions: %v", partitions))
 
+	if len(partitions) == 0 {
+		ui.Error("no partitions defined")
+		return multistep.ActionHalt
+	}
+
 	p := partitions[len(partitions)-1]
 	err := s.e2fsck(ctx, wrappedCommand, p)
 	if err != nil {
