@@ -28,8 +28,7 @@ func (r *reader) Close() error {
 
 // try and automatically fetch qemu
 func GetEmbededQemu(file string) (io.ReadCloser, error) {
-	f, err := content.Open(file + ".gz")
-
+	f, err := content.Open("bins/" + file + ".gz")
 	if err != nil {
 		return nil, err
 	}

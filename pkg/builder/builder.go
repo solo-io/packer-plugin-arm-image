@@ -179,21 +179,22 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 			embeddedQ, err := embed.GetEmbededQemu(b.config.QemuBinary)
 			if err != nil {
 				errs = packer.MultiErrorAppend(errs, fmt.Errorf("embedded qemu is not available - %w", err))
-			}
-			defer embeddedQ.Close()
-			qemupathincache, err := packer.CachePath(b.config.QemuBinary)
-			if err != nil {
-				errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache qemu - %w", err))
-			} else if _, err := os.Stat(qemupathincache); os.IsNotExist(err) {
-				// copy to cache folder, make executable, and use as path.
-				// also check if it exists before copying.
-				cachedFile, err := os.OpenFile(qemupathincache, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+			} else {
+				defer embeddedQ.Close()
+				qemupathincache, err := packer.CachePath(b.config.QemuBinary)
 				if err != nil {
-					errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache - %w", err))
-				} else {
-					defer cachedFile.Close()
-					io.Copy(cachedFile, embeddedQ)
-					b.config.QemuBinary = qemupathincache
+					errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache qemu - %w", err))
+				} else if _, err := os.Stat(qemupathincache); os.IsNotExist(err) {
+					// copy to cache folder, make executable, and use as path.
+					// also check if it exists before copying.
+					cachedFile, err := os.OpenFile(qemupathincache, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0755)
+					if err != nil {
+						errs = packer.MultiErrorAppend(errs, fmt.Errorf("cannot cache - %w", err))
+					} else {
+						defer cachedFile.Close()
+						io.Copy(cachedFile, embeddedQ)
+						b.config.QemuBinary = qemupathincache
+					}
 				}
 			}
 		}

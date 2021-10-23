@@ -25,6 +25,10 @@ jobs:
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-
+    - name: Acceptance test
+      run: |
+        make packer
+        make testacc
     - name: Go releaser
       run: |
         make release-snapshot

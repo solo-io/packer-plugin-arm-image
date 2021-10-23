@@ -510,6 +510,7 @@ github.com/hashicorp/hcl/v2/ext/customdecode
 github.com/hashicorp/hcl/v2/hcldec
 # github.com/hashicorp/packer-plugin-sdk v0.2.7
 ## explicit
+github.com/hashicorp/packer-plugin-sdk/acctest
 github.com/hashicorp/packer-plugin-sdk/chroot
 github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc
 github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc/internal/fs
