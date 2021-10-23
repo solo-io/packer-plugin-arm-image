@@ -35,5 +35,10 @@ install-local:
 packer:
 	which packer || go install github.com/hashicorp/packer@v1.7.6
 
-testacc: install-local
+testacc:
 	PACKER_ACC=1 go test -count $(COUNT) -v $(TEST) -timeout=120m
+
+testacc-sudo:
+	cd pkg/builder && \
+	go test -c . && \
+	PACKER_ACC=1 PACKER_CONFIG_DIR=$(HOME) sudo -E bash -c "PATH=$(HOME)/go/bin:$$PATH ./builder.test"

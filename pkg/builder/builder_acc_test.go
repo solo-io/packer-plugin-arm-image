@@ -46,7 +46,7 @@ func TestAccScaffoldingBuilder(t *testing.T) {
 			}
 			logsString := string(logsBytes)
 
-			buildGeneratedDataLog := "scaffolding-my-builder.basic-example: build generated data: mock-build-data"
+			buildGeneratedDataLog := "arm-image.test,artifact-count"
 			if matched, _ := regexp.MatchString(buildGeneratedDataLog+".*", logsString); !matched {
 				t.Fatalf("logs doesn't contain expected foo value %q", logsString)
 			}

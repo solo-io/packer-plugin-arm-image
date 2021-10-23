@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -195,6 +196,10 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 						io.Copy(cachedFile, embeddedQ)
 						b.config.QemuBinary = qemupathincache
 					}
+				} else if err == nil {
+					b.config.QemuBinary = qemupathincache
+				} else {
+					errs = packer.MultiErrorAppend(errs, fmt.Errorf("unknown cache error - %w", err))
 				}
 			}
 		}
@@ -206,6 +211,7 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 		b.config.QemuBinary = path
 	}
 
+	log.Println("qemu path", b.config.QemuBinary)
 	if errs != nil && len(errs.Errors) > 0 {
 		return nil, warnings, errs
 	}
@@ -267,7 +273,10 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 	const ChrootKey = "mount_path"
 	steps = append(steps,
 		&stepMountImage{PartitionsKey: "partitions", ResultKey: ChrootKey, MountPath: b.config.MountPath},
-		&StepMountExtra{ChrootKey: ChrootKey},
+		&chroot.StepMountExtra{
+			ChrootMounts: b.config.ChrootMounts,
+		},
+		&StepMountCleanup{},
 	)
 
 	if b.config.ResolvConf == CopyHost || b.config.ResolvConf == Delete {

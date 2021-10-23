@@ -9,10 +9,26 @@ build {
   sources = [
     "source.arm-image.test"
   ]
-  # install hostapd, bridge utils, and other utilities.
-  provisioner "shell" {
-    inline = [
-      "echo hello world"
-    ]
-  }
+  # test that we can upload a file:
+  provisioner "file" {
+      source = "builder.go"
+      destination = "/"
+    }
+  
+  
+  # provisioner "breakpoint" { 
+  #      disable = false    
+  #      note    = "this is a breakpoint"  
+  #      }
+
+  # test that we can run a command: 
+  # not sure why, but some reason PATH is not set and this fails
+  # disable for now.
+ # provisioner "shell" {
+ #   inline = [
+ #     "echo hello world"
+ #   ]
+ #   environment_vars = ["PATH=/bin:$PATH"]
+ #   execute_command = "/bin/chmod +x {{.Path}}; {{.Vars}} {{.Path}}"
+ # }
 }

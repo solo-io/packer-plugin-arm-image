@@ -54,6 +54,11 @@ docker run \
   quay.io/solo-io/packer-builder-arm-image:v0.2.1 build -var local_ssh_public_key=/config/id_rsa.pub .
 ```
 
+or, run as root:
+```
+PACKER_CONFIG_DIR=$HOME sudo -E $(which packer) build -var local_ssh_public_key=$HOME/.ssh/id_rsa.pub .
+```
+
 **Note**: This image doesn't result with kubernetes installed. Instead, it just sets up and image with the binaries needed to install it.
 Specifically, this example automates the [Installing kubeadm](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/) section of the ["Bootstrapping clusters with kubeadm"](https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/) kubernetes documentaiton.
 
