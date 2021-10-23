@@ -25,6 +25,7 @@ ci-release-docs:
 	/bin/sh -c "[ -d docs ] && zip -r docs.zip docs/"
 
 install-local:
+	go generate ./...
 	go build -o packer-plugin-arm-image .
 	mkdir -p $(HOME)/.packer.d/plugins
 	cp packer-plugin-arm-image $(HOME)/.packer.d/plugins/

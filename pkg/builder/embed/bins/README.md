@@ -1,1 +1,1 @@
-Place qemu binaries in this folder.
+Use the _download_binaries.sh script to place qemu binaries in this folder, so they are embedded in the binary.

@@ -9,7 +9,7 @@ import (
 
 //go:generate bins/_download_binaries.sh
 
-//go:embed bins/*.gz
+//go:embed bins
 var content embed.FS
 
 type reader struct {
