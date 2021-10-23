@@ -41,4 +41,6 @@ testacc:
 testacc-sudo:
 	cd pkg/builder && \
 	go test -c . && \
-	PACKER_ACC=1 PACKER_CONFIG_DIR=$(HOME) sudo -E bash -c "PATH=$(HOME)/go/bin:$$PATH ./builder.test"
+	PACKER_ACC=1 PACKER_CONFIG_DIR=$(HOME) sudo -E bash -c "PATH=$(HOME)/go/bin:$$PATH ./builder.test" && \
+	rm img.delete builder.test
+ 
