@@ -1,6 +1,7 @@
 #!/bin/bash
 
 go generate ./...
+go mod vendor
 go mod tidy
 if [[ $(git status --porcelain | wc -l) -ne 0 ]]; then
     echo "Generating code produced a non-empty diff"
