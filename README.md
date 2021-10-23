@@ -127,7 +127,7 @@ docker run \
 ```
 
 ### Option 2: Run the published Docker image
-Alternatively, you can use the `ghcr.io/solo-io/packer-plugin-arm-image/packer-builder-arm` that's built off latest master without needing to clone this repository.
+Alternatively, you can use the `ghcr.io/solo-io/packer-plugin-arm-image` that's built off latest master without needing to clone this repository.
 ```shell
 docker run \
   --rm \
@@ -136,10 +136,8 @@ docker run \
   -v ${PWD}:/build:ro \
   -v ${PWD}/packer_cache:/build/packer_cache \
   -v ${PWD}/output-arm-image:/build/output-arm-image \
-  ghcr.io/solo-io/packer-plugin-arm-image/packer-builder-arm build samples/raspbian_golang.json
+  ghcr.io/solo-io/packer-plugin-arm-image build samples/raspbian_golang.json
 ```
-
-Note: On every release docker images are published to `quay.io/solo-io/packer-plugin-arm-image` as well (for example: `quay.io/solo-io/packer-plugin-arm-image:v0.1.5`).
 
 That's it, flash it and run!
 

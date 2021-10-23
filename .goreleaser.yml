@@ -86,7 +86,7 @@ changelog:
 
 #dockers:
 #  - image_templates:
-#    - quay.io/solo-io/packer-builder-arm-image:{{ .Tag }}
+#    - ghcr.io/solo-io/packer-builder-arm-image:{{ .Tag }}
 #    dockerfile: Dockerfile.release
 # #   extra_files:
 # #   - config.yml
