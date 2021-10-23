@@ -1,5 +1,6 @@
 
-
+COUNT?=1
+TEST?=$(shell go list ./...)
 
 check-generated:
 	./tools/check_generated.sh
@@ -31,7 +32,7 @@ install-local:
 	cp packer-plugin-arm-image $(HOME)/.packer.d/plugins/
 
 packer:
-	go install github.com/hashicorp/packer@v1.7.6
+	which packer || go install github.com/hashicorp/packer@v1.7.6
 
 testacc: install-local
 	@PACKER_ACC=1 go test -count $(COUNT) -v $(TEST) -timeout=120m
