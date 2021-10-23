@@ -1,0 +1,142 @@
+---
+description: |
+    The `arm-image` Packer builder plugin is able to re-master arm/aarch64 images on x86 machines
+    using qemu-user-static. The builder can download a source image, runs any provisioning necessary
+    on the image including binary invocations like "apt-get".
+page_title: Arm Image Builder
+nav_title: Arm Image
+---
+
+# Arm Image Builder
+
+Type: ``
+Artifact BuilderId: `yuval-k.arm-image`
+
+The `arm-image` Packer builder plugin is able re-master image files to automate their creation.
+
+## Configuration Reference
+
+There are many configuration options available for the builder. They are
+segmented below into two categories: required and optional parameters.
+
+In addition to the options listed here,
+a [communicator](/docs/templates/legacy_json_templates/communicator) can be configured for this builder.
+
+### Required:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig-required.mdx'
+
+
+### Optional:
+
+@include 'packer-plugin-sdk/multistep/commonsteps/ISOConfig-not-required.mdx'
+@include 'pkg/builder/Config-not-required.mdx'
+
+
+## Basic Example
+
+Here is a basic example for Arm Image.
+
+<Tabs>
+<Tab heading="JSON">
+
+``` json
+{
+  "variables": {
+    "wifi_name": "",
+    "wifi_password": "",
+    "home": "{{env `HOME`}}"
+  },
+  "builders": [{
+    "type": "arm-image",
+    "iso_url": "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip",
+    "iso_checksum": "sha256:12ae6e17bf95b6ba83beca61e7394e7411b45eba7e6a520f434b0748ea7370e8",
+    "target_image_size": 3221225472
+  }],  
+  "provisioners": [
+    {
+      "type": "shell",
+      "inline": ["touch /boot/ssh"]
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "wpa_passphrase \"{{user `wifi_name`}}\" \"{{user `wifi_password`}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf"
+      ]
+    },
+    {
+      "type": "file",
+      "source": "{{user `home`}}/.ssh/id_rsa.pub",
+      "destination": "/home/pi/.ssh/authorized_keys"
+    },
+    {
+      "type": "shell",
+      "inline": [
+        "chown pi:pi /home/pi/.ssh/authorized_keys",
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo  >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config"
+      ]
+    }
+  ]
+}
+```
+
+</Tab>
+<Tab heading="HCL2">
+
+```hcl
+variable "wifi_name" {
+  type = string
+}
+variable "wifi_password" {
+  type = string
+  sensitive = true
+}
+variable "local_ssh_public_key" {
+  type = string
+  default = "~/.ssh/id_rsa.pub"
+}
+locals {
+  ssh_key = "${pathexpand(var.local_ssh_public_key)}"
+}
+
+source "arm-image" "raspbian" {
+  iso_url = "https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2020-02-14/2020-02-13-raspbian-buster-lite.zip"
+  iso_checksum = "sha256:12ae6e17bf95b6ba83beca61e7394e7411b45eba7e6a520f434b0748ea7370e8"
+  target_image_size = 3*1024*1024*1024
+}
+
+build {
+  sources = ["source.arm-image.raspbian"]
+
+  provisioner "shell" {
+    inline = [
+      "touch /boot/ssh",
+    ]
+  }
+
+  provisioner "shell" {
+    inline = [
+      "wpa_passphrase \"${var.wifi_name}\" \"${var.wifi_password}}\" | sed -e 's/#.*$//' -e '/^$/d' >> /etc/wpa_supplicant/wpa_supplicant.conf",
+    ]
+  }
+
+  provisioner "file" {
+    source = "${local.ssh_key}"
+    destination = "/home/pi/.ssh/authorized_keys"
+  }
+  provisioner "shell" {
+    inline = [
+        "chown pi:pi ${var.image_home_dir}/.ssh/authorized_keys",
+        "sed '/PasswordAuthentication/d' -i /etc/ssh/sshd_config",
+        "echo >> /etc/ssh/sshd_config",
+        "echo 'PasswordAuthentication no' >> /etc/ssh/sshd_config",
+      ]
+  }
+
+}
+```
+
+</Tab>
+</Tabs>
