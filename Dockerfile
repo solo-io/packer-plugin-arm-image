@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:buster AS builder
+FROM docker.io/library/golang:1.17.2-buster AS builder
 RUN apt-get update -qq \
  && apt-get install -qqy git && \
  mkdir /build
