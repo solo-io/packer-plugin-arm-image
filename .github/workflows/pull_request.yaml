@@ -31,7 +31,7 @@ jobs:
         unzip packer_1.7.7_linux_amd64.zip
         mv packer /usr/local/bin/packer
         # make packer
-        make testacc
+        sudo make testacc
     - name: Failed acceptance
       if: ${{ failure() }}
       run: |
