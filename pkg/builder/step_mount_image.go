@@ -14,10 +14,11 @@ import (
 )
 
 type stepMountImage struct {
-	PartitionsKey string
-	ResultKey     string
-	MountPath     string
-	mountpoints   []string
+	PartitionsKey    string
+	ResultKey        string
+	MountPath        string
+	GeneratedDataKey string
+	mountpoints      []string
 }
 
 func (s *stepMountImage) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {
@@ -80,6 +81,9 @@ func (s *stepMountImage) Run(ctx context.Context, state multistep.StateBag) mult
 	}
 
 	state.Put(s.ResultKey, s.MountPath)
+
+	updateGeneratedData(state, s.GeneratedDataKey, s.MountPath)
+
 	return multistep.ActionContinue
 }
 
@@ -107,4 +111,14 @@ func reverse(numbers []string) []string {
 		newNumbers[i], newNumbers[j] = numbers[j], numbers[i]
 	}
 	return newNumbers
+}
+
+func updateGeneratedData(state multistep.StateBag, key string, value string) {
+	generatedData, found := state.GetOk("generated_data")
+
+	if found {
+		generatedData.(map[string]interface{})[key] = value
+	} else {
+		state.Put("generated_data", map[string]interface{}{key: value})
+	}
 }
