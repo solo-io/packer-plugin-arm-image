@@ -2,9 +2,9 @@ package tty
 
 import (
 	"bufio"
+	"errors"
 	"os"
 	"syscall"
-	"errors"
 )
 
 type TTY struct {
@@ -13,7 +13,7 @@ type TTY struct {
 	out *os.File
 }
 
-func open() (*TTY, error) {
+func open(path string) (*TTY, error) {
 	tty := new(TTY)
 
 	in, err := os.Open("/dev/cons")
