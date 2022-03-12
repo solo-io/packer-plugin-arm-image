@@ -6,8 +6,14 @@ import (
 	"unicode"
 )
 
+var linefeed = []byte{'\n'}
+
 func Open() (*TTY, error) {
-	return open()
+	return open("/dev/tty")
+}
+
+func OpenDevice(path string) (*TTY, error) {
+	return open(path)
 }
 
 func (tty *TTY) Raw() (func() error, error) {
@@ -72,7 +78,7 @@ loop:
 			if len(rs) > 0 {
 				rs = rs[:len(rs)-1]
 				if displayType != displayNone {
-					tty.Output().WriteString("\b \b")
+					tty.Output().Write([]byte("\b \b"))
 				}
 			}
 		default:
@@ -80,9 +86,9 @@ loop:
 				rs = append(rs, r)
 				switch displayType {
 				case displayRune:
-					tty.Output().WriteString(string(r))
+					tty.Output().Write([]byte(string(r)))
 				case displayMask:
-					tty.Output().WriteString("*")
+					tty.Output().Write([]byte{'*'})
 				}
 			}
 		}
@@ -91,26 +97,26 @@ loop:
 }
 
 func (tty *TTY) ReadString() (string, error) {
-	defer tty.Output().WriteString("\n")
+	defer tty.Output().Write(linefeed)
 	return tty.readString(displayRune)
 }
 
 func (tty *TTY) ReadPassword() (string, error) {
-	defer tty.Output().WriteString("\n")
+	defer tty.Output().Write(linefeed)
 	return tty.readString(displayMask)
 }
 
 func (tty *TTY) ReadPasswordNoEcho() (string, error) {
-	defer tty.Output().WriteString("\n")
+	defer tty.Output().Write(linefeed)
 	return tty.readString(displayNone)
 }
 
 func (tty *TTY) ReadPasswordClear() (string, error) {
 	s, err := tty.readString(displayMask)
-	tty.Output().WriteString(
+	tty.Output().Write([]byte(
 		strings.Repeat("\b", len(s)) +
 			strings.Repeat(" ", len(s)) +
-			strings.Repeat("\b", len(s)))
+			strings.Repeat("\b", len(s))))
 	return s, err
 }
 

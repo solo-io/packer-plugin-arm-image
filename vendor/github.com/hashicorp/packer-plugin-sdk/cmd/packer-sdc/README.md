@@ -16,5 +16,6 @@ See docs for subcommands for further info by reading their readme or using their
 specific help commands:
 
 * `packer-sdc mapstructure-to-hcl2 -h`
+* `packer-sdc plugin-check -h`
 * `packer-sdc struct-markdown -h`
 * `packer-sdc renderdocs -h`

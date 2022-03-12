@@ -1,4 +1,4 @@
-
+BINARY=packer-plugin-arm-image
 COUNT?=1
 TEST?=$(shell go list ./...)
 
@@ -28,12 +28,12 @@ ci-release-docs:
 
 install-local:
 	go generate ./...
-	go build -o packer-plugin-arm-image .
+	go build -o ${BINARY} .
 	mkdir -p $(HOME)/.packer.d/plugins
-	cp packer-plugin-arm-image $(HOME)/.packer.d/plugins/
+	mv ${BINARY} $(HOME)/.packer.d/plugins/
 
 packer:
-	which packer || go install github.com/hashicorp/packer@v1.7.6
+	which packer || go install github.com/hashicorp/packer@v1.8.0
 
 testacc:
 	PACKER_ACC=1 go test -count $(COUNT) -v $(TEST) -timeout=120m
@@ -44,3 +44,5 @@ testacc-sudo:
 	PACKER_ACC=1 PACKER_CONFIG_DIR=$(HOME) sudo -E bash -c "PATH=$(HOME)/go/bin:$$PATH ./builder.test" && \
 	rm img.delete builder.test
  
+plugin-check: build
+	go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc plugin-check ${BINARY}

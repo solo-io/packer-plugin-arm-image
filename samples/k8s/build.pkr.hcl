@@ -1,3 +1,11 @@
+packer {
+  required_plugins {
+    happycloud = {
+      version = ">= 2.7.0"
+      source = "github.com/azr/happycloud"
+    }
+  }
+}
 
 build {
   sources = [
@@ -28,6 +36,8 @@ build {
       "apt-get update",
       "apt-get full-upgrade -y",
       "apt-get install -y bridge-utils"
+      # install useful utils:
+      "apt-get install -y tcpdump"
     ]
   }
 
