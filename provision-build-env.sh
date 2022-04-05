@@ -42,18 +42,18 @@ echo "Removing existing Go packages and installing Go"
 sudo apt remove -y \
   'golang-*'
 cd /tmp
-wget https://dl.google.com/go/go1.14.3.linux-amd64.tar.gz
-tar xf go1.14.3.linux-amd64.tar.gz
-sudo cp -r go /usr/lib/go-1.14
+wget https://go.dev/dl/go1.18.linux-amd64.tar.gz
+tar xf go1.18.linux-amd64.tar.gz
+sudo cp -r go /usr/lib/go-1.18
 rm -rf /tmp/go*
 
 # Set GO paths for vagrant user
-echo 'export GOROOT=/usr/lib/go-1.14
+echo 'export GOROOT=/usr/lib/go-1.18
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin' | tee -a /home/vagrant/.profile
 
 # Also set them while we work:
-export GOROOT=/usr/lib/go-1.14
+export GOROOT=/usr/lib/go-1.18
 export GOPATH=$HOME/work
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
