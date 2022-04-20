@@ -125,7 +125,7 @@ func (s *imageOpener) openzip(f *os.File) (Image, error) {
 	}
 
 	//transfer ownership
-	mc := &multiCloser{zippedfileReader, []io.Closer{zippedfileReader, f}, zippedfile.UncompressedSize64}
+	mc := &multiCloser{zippedfileReader, []io.Closer{zippedfileReader, f}, nil, zippedfile.UncompressedSize64}
 	f = nil
 
 	return mc, nil
@@ -167,7 +167,7 @@ func uncompress(f *os.File, fastcmd string, slowNewReader func(r io.Reader) (io.
 	}
 
 	//transfer ownership
-	mc := &multiCloser{r, []io.Closer{f}, 0}
+	mc := &multiCloser{r, []io.Closer{f}, nil, 0}
 	f = nil
 
 	return mc, nil
@@ -188,12 +188,8 @@ func xzFastlane(cmd string, f *os.File) (Image, error) {
 		return nil, err
 	}
 
-	go func() {
-		xzcat.Wait()
-	}()
-
 	// use mc for size estimate
-	mc := &multiCloser{r, []io.Closer{r}, 0}
+	mc := &multiCloser{r, []io.Closer{r}, xzcat, 0}
 
 	return mc, nil
 
@@ -202,6 +198,12 @@ func xzFastlane(cmd string, f *os.File) (Image, error) {
 type multiCloser struct {
 	io.Reader
 	c []io.Closer
+	// As the reader that is stored in c is the StdoutPipe of an exec.Cmd
+	// instance, we must ensure the command isn't closed prior to the reader
+	// being closed otherwise we end up with and error like:
+	// 'read |0: file already closed'.
+	// See also https://pkg.go.dev/os/exec#Cmd.StdoutPipe
+	command *exec.Cmd
 
 	sizeEstimate uint64
 }
@@ -210,7 +212,14 @@ func (n *multiCloser) Close() error {
 	for _, c := range n.c {
 		c.Close()
 	}
-	return nil
+
+	var err error
+	// Wait for the readers (including StdoutPipe) to be closed
+	// and then initiate the command shutdown if we have a command.
+	if n.command != nil {
+		err = n.command.Wait()
+	}
+	return err
 }
 
 func (f *multiCloser) SizeEstimate() uint64 { return f.sizeEstimate }
