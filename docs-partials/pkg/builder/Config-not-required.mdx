@@ -12,6 +12,10 @@
   If not provided, we will try to deduce it from the image url. (see autoDetectType())
   For list of valid values, see: pkg/image/utils/images.go
 
+- `image_arch` (arch.KnownArchType) - Image's target CPU architecture.
+  This is used to determine if qemu is necessary and which flavor to use.
+  Defaults to "arm". For list of valid values, see: pkg/image/arch/arch.go
+
 - `image_mounts` ([]string) - Where to mounts the image partitions in the chroot.
   first entry is the mount point of the first partition. etc..
 
@@ -37,12 +41,15 @@
   fill up this much room. I.e. if the generated image is 256MB and TargetImageSize
   is set to 384MB the last partition will be extended with an additional 128MB.
 
-- `qemu_binary` (string) - Qemu binary to use. default is qemu-arm-static
+- `qemu_binary` (string) - Qemu binary to use. default is determined based on `image_arch`.
   If this is an absolute path, it will be used. Otherwise, we will look for one in your PATH
   and finally, try to auto fetch one from https://github.com/multiarch/qemu-user-static/
 
 - `disable_embedded` (bool) - Do not use embedded qemu.
 
 - `qemu_args` ([]string) - Arguments to qemu binary. default depends on the image type. see init() function above.
+
+- `qemu_required` (bool) - Use qemu even when the build machine's CPU architecture matches the image's CPU architecture.
+  Defaults to true if non-default `qemu_binary` or `qemu_args` are supplied.
 
 <!-- End of code generated from the comments of the Config struct in pkg/builder/config.go; -->

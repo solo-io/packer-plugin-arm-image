@@ -4,6 +4,7 @@ package builder
 
 import (
 	"github.com/hashicorp/hcl/v2/hcldec"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image/arch"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
 	"github.com/zclconf/go-cty/cty"
 )
@@ -28,6 +29,7 @@ type FlatConfig struct {
 	OutputDir              *string               `mapstructure:"output_directory" cty:"output_directory" hcl:"output_directory"`
 	OutputFile             *string               `mapstructure:"output_filename" cty:"output_filename" hcl:"output_filename"`
 	ImageType              *utils.KnownImageType `mapstructure:"image_type" cty:"image_type" hcl:"image_type"`
+	ImageArch              *arch.KnownArchType   `mapstructure:"image_arch" cty:"image_arch" hcl:"image_arch"`
 	ImageMounts            []string              `mapstructure:"image_mounts" cty:"image_mounts" hcl:"image_mounts"`
 	MountPath              *string               `mapstructure:"mount_path" cty:"mount_path" hcl:"mount_path"`
 	ChrootMounts           [][]string            `mapstructure:"chroot_mounts" cty:"chroot_mounts" hcl:"chroot_mounts"`
@@ -38,6 +40,7 @@ type FlatConfig struct {
 	QemuBinary             *string               `mapstructure:"qemu_binary" cty:"qemu_binary" hcl:"qemu_binary"`
 	DisableEmbedded        *bool                 `mapstructure:"disable_embedded" cty:"disable_embedded" hcl:"disable_embedded"`
 	QemuArgs               []string              `mapstructure:"qemu_args" cty:"qemu_args" hcl:"qemu_args"`
+	QemuRequired           *bool                 `mapstructure:"qemu_required" cty:"qemu_required" hcl:"qemu_required"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -69,6 +72,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"output_directory":           &hcldec.AttrSpec{Name: "output_directory", Type: cty.String, Required: false},
 		"output_filename":            &hcldec.AttrSpec{Name: "output_filename", Type: cty.String, Required: false},
 		"image_type":                 &hcldec.AttrSpec{Name: "image_type", Type: cty.String, Required: false},
+		"image_arch":                 &hcldec.AttrSpec{Name: "image_arch", Type: cty.String, Required: false},
 		"image_mounts":               &hcldec.AttrSpec{Name: "image_mounts", Type: cty.List(cty.String), Required: false},
 		"mount_path":                 &hcldec.AttrSpec{Name: "mount_path", Type: cty.String, Required: false},
 		"chroot_mounts":              &hcldec.AttrSpec{Name: "chroot_mounts", Type: cty.List(cty.List(cty.String)), Required: false},
@@ -79,6 +83,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"qemu_binary":                &hcldec.AttrSpec{Name: "qemu_binary", Type: cty.String, Required: false},
 		"disable_embedded":           &hcldec.AttrSpec{Name: "disable_embedded", Type: cty.Bool, Required: false},
 		"qemu_args":                  &hcldec.AttrSpec{Name: "qemu_args", Type: cty.List(cty.String), Required: false},
+		"qemu_required":              &hcldec.AttrSpec{Name: "qemu_required", Type: cty.Bool, Required: false},
 	}
 	return s
 }

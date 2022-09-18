@@ -9,7 +9,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/hashicorp/hcl/v2/hcldec"
@@ -23,6 +22,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/builder/embed"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/image"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image/arch"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
 
 	getter "github.com/hashicorp/go-getter/v2"
@@ -39,6 +39,13 @@ var (
 	}
 	knownArgs = map[utils.KnownImageType][]string{
 		utils.BeagleBone: {"-cpu", "cortex-a8"},
+	}
+
+	knownQemu = map[arch.KnownArchType]string{
+		arch.Arm:     "qemu-arm-static",
+		arch.ArmBE:   "qemu-armeb-static",
+		arch.Arm64:   "qemu-aarch64-static",
+		arch.Arm64BE: "qemu-aarch64_be-static",
 	}
 
 	defaultBase = [][]string{
@@ -166,14 +173,28 @@ func (b *Builder) Prepare(cfgs ...interface{}) ([]string, []string, error) {
 		if len(b.config.QemuArgs) == 0 {
 			b.config.QemuArgs = knownArgs[b.config.ImageType]
 		}
+		if len(b.config.QemuArgs) > 0 {
+			// If the image requires custom qemu args or the user provided some, make sure we use qemu
+			b.config.QemuRequired = true
+		}
 	}
 
 	if len(b.config.ImageMounts) == 0 {
 		errs = packer.MultiErrorAppend(errs, fmt.Errorf("no image mounts provided. Please set the image mounts or image type."))
 	}
 
+	if b.config.ImageArch == arch.Unknown {
+		b.config.ImageArch = arch.Arm
+	} else if !b.config.ImageArch.Valid() {
+		errs = packer.MultiErrorAppend(errs, fmt.Errorf("unknown image_arch. must be one of: %v", arch.Values()))
+		b.config.ImageArch = arch.Arm
+	}
+
 	if b.config.QemuBinary == "" {
-		b.config.QemuBinary = "qemu-arm-static"
+		b.config.QemuBinary = knownQemu[b.config.ImageArch]
+	} else if b.config.QemuBinary != knownQemu[b.config.ImageArch] {
+		// If the user provided a non-default qemu, make sure we use it
+		b.config.QemuRequired = true
 	}
 	// convert to full path
 	path, err := exec.LookPath(b.config.QemuBinary)
@@ -301,8 +322,7 @@ func (b *Builder) Run(ctx context.Context, ui packer.Ui, hook packer.Hook) (pack
 			&stepHandleResolvConf{ChrootKey: ChrootKey, Delete: b.config.ResolvConf == Delete})
 	}
 
-	native := runtime.GOARCH == "arm" || runtime.GOARCH == "arm64"
-	if !native {
+	if !b.config.ImageArch.IsNative() || b.config.QemuRequired {
 		steps = append(steps,
 			&stepQemuUserStatic{ChrootKey: ChrootKey, PathToQemuInChrootKey: "qemuInChroot", Args: Args{Args: b.config.QemuArgs}},
 			&stepRegisterBinFmt{QemuPathKey: "qemuInChroot"},

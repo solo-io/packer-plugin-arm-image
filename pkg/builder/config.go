@@ -7,6 +7,7 @@ import (
 	packer_common_common "github.com/hashicorp/packer-plugin-sdk/common"
 	packer_common_commonsteps "github.com/hashicorp/packer-plugin-sdk/multistep/commonsteps"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
+	"github.com/solo-io/packer-plugin-arm-image/pkg/image/arch"
 	"github.com/solo-io/packer-plugin-arm-image/pkg/image/utils"
 )
 
@@ -31,6 +32,11 @@ type Config struct {
 	// If not provided, we will try to deduce it from the image url. (see autoDetectType())
 	// For list of valid values, see: pkg/image/utils/images.go
 	ImageType utils.KnownImageType `mapstructure:"image_type"`
+
+	// Image's target CPU architecture.
+	// This is used to determine if qemu is necessary and which flavor to use.
+	// Defaults to "arm". For list of valid values, see: pkg/image/arch/arch.go
+	ImageArch arch.KnownArchType `mapstructure:"image_arch"`
 
 	// Where to mounts the image partitions in the chroot.
 	// first entry is the mount point of the first partition. etc..
@@ -63,7 +69,7 @@ type Config struct {
 	// is set to 384MB the last partition will be extended with an additional 128MB.
 	TargetImageSize uint64 `mapstructure:"target_image_size"`
 
-	// Qemu binary to use. default is qemu-arm-static
+	// Qemu binary to use. default is determined based on `image_arch`.
 	// If this is an absolute path, it will be used. Otherwise, we will look for one in your PATH
 	// and finally, try to auto fetch one from https://github.com/multiarch/qemu-user-static/
 	QemuBinary string `mapstructure:"qemu_binary"`
@@ -71,6 +77,9 @@ type Config struct {
 	DisableEmbedded bool `mapstructure:"disable_embedded"`
 	// Arguments to qemu binary. default depends on the image type. see init() function above.
 	QemuArgs []string `mapstructure:"qemu_args"`
+	// Use qemu even when the build machine's CPU architecture matches the image's CPU architecture.
+	// Defaults to true if non-default `qemu_binary` or `qemu_args` are supplied.
+	QemuRequired bool `mapstructure:"qemu_required"`
 
 	ctx interpolate.Context
 }
