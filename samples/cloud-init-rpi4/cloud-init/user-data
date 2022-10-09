@@ -1,0 +1,17 @@
+#cloud-config
+ssh_pwauth: true
+preserve_hostname: false
+hostname: solorpi
+package_upgrade: true
+timezone: Europe/Berlin
+packages:
+  - cowsay
+users:
+  - name: admin
+    gecos: "SoloIO Admin"
+    passwd: $6$xqBmC/BkZMzbERcn$YmzoBQ70fap9wYh1A8sYrj3An8isBLda4FW2KX.NLPFcV0jLo6ys5jkY1uTkuNj5T76DkpKkGcOCOLBQSbEYb0
+    no_user_group: true
+    lock_passwd: false
+    groups: sudo, adm, lxd, dip, plugdev
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
