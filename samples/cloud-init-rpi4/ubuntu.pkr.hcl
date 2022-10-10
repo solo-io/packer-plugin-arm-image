@@ -46,10 +46,4 @@ build {
     source = "cloud-init/user-data"
     destination = "/boot/firmware/user-data"
   }
-
-  provisioner "shell" {
-    scripts = [
-      "./scripts/install-cowsay.sh"
-    ]
-  }
 }
