@@ -23,6 +23,7 @@ type FlatConfig struct {
 	Scripts             []string          `cty:"scripts" hcl:"scripts"`
 	ValidExitCodes      []int             `mapstructure:"valid_exit_codes" cty:"valid_exit_codes" hcl:"valid_exit_codes"`
 	Vars                []string          `mapstructure:"environment_vars" cty:"environment_vars" hcl:"environment_vars"`
+	Env                 map[string]string `mapstructure:"env" cty:"env" hcl:"env"`
 	EnvVarFormat        *string           `mapstructure:"env_var_format" cty:"env_var_format" hcl:"env_var_format"`
 	Command             *string           `cty:"command" hcl:"command"`
 	ExecuteCommand      []string          `mapstructure:"execute_command" cty:"execute_command" hcl:"execute_command"`
@@ -57,6 +58,7 @@ func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 		"scripts":                    &hcldec.AttrSpec{Name: "scripts", Type: cty.List(cty.String), Required: false},
 		"valid_exit_codes":           &hcldec.AttrSpec{Name: "valid_exit_codes", Type: cty.List(cty.Number), Required: false},
 		"environment_vars":           &hcldec.AttrSpec{Name: "environment_vars", Type: cty.List(cty.String), Required: false},
+		"env":                        &hcldec.AttrSpec{Name: "env", Type: cty.Map(cty.String), Required: false},
 		"env_var_format":             &hcldec.AttrSpec{Name: "env_var_format", Type: cty.String, Required: false},
 		"command":                    &hcldec.AttrSpec{Name: "command", Type: cty.String, Required: false},
 		"execute_command":            &hcldec.AttrSpec{Name: "execute_command", Type: cty.List(cty.String), Required: false},

@@ -123,6 +123,7 @@ type SSH struct {
 	// The time to wait for SSH to become available. Packer uses this to
 	// determine when the machine has booted so this is usually quite long.
 	// Example value: `10m`.
+	// This defaults to `5m`, unless `ssh_handshake_attempts` is set.
 	SSHTimeout time.Duration `mapstructure:"ssh_timeout"`
 	// Deprecated in favor of SSHTimeout
 	SSHWaitTimeout time.Duration `mapstructure:"ssh_wait_timeout" undocumented:"true"`
@@ -135,8 +136,8 @@ type SSH struct {
 	SSHAgentAuth bool `mapstructure:"ssh_agent_auth" undocumented:"true"`
 	// If true, SSH agent forwarding will be disabled. Defaults to `false`.
 	SSHDisableAgentForwarding bool `mapstructure:"ssh_disable_agent_forwarding"`
-	// The number of handshakes to attempt with SSH once it can connect. This
-	// defaults to `10`.
+	// The number of handshakes to attempt with SSH once it can connect.
+	// This defaults to `10`, unless a `ssh_timeout` is set.
 	SSHHandshakeAttempts int `mapstructure:"ssh_handshake_attempts"`
 	// A bastion host to use for the actual SSH connection.
 	SSHBastionHost string `mapstructure:"ssh_bastion_host"`
@@ -472,16 +473,14 @@ func (c *Config) prepareSSH(ctx *interpolate.Context) []error {
 		c.SSHPort = 22
 	}
 
-	if c.SSHTimeout == 0 {
+	// Only set default values when neither are set
+	if c.SSHTimeout == 0 && c.SSHHandshakeAttempts == 0 {
 		c.SSHTimeout = 5 * time.Minute
+		c.SSHHandshakeAttempts = 10
 	}
 
 	if c.SSHKeepAliveInterval == 0 {
 		c.SSHKeepAliveInterval = 5 * time.Second
-	}
-
-	if c.SSHHandshakeAttempts == 0 {
-		c.SSHHandshakeAttempts = 10
 	}
 
 	if c.SSHBastionHost != "" {

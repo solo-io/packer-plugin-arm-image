@@ -96,19 +96,6 @@ func Validate(config *Config) error {
 		}
 	}
 
-	// Clean up input
-	if config.Inline != nil && len(config.Inline) == 0 {
-		config.Inline = make([]string, 0)
-	}
-
-	if config.Scripts == nil {
-		config.Scripts = make([]string, 0)
-	}
-
-	if config.Vars == nil {
-		config.Vars = make([]string, 0)
-	}
-
 	// Verify that the user has given us a command to run
 	if config.Command == "" && len(config.Inline) == 0 &&
 		len(config.Scripts) == 0 && config.Script == "" {

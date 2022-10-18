@@ -3,8 +3,10 @@ package embed
 import (
 	"compress/gzip"
 	"embed"
+	"fmt"
 	"io"
 	"io/fs"
+	"runtime"
 )
 
 //go:generate bins/_download_binaries.sh
@@ -28,6 +30,12 @@ func (r *reader) Close() error {
 
 // try and automatically fetch qemu
 func GetEmbededQemu(file string) (io.ReadCloser, error) {
+
+	// for now, we only embed linux amd64 qemu
+	if runtime.GOOS != "linux" || runtime.GOARCH != "amd64" {
+		return nil, fmt.Errorf("currently, embedded qemu is only available for linux amd64. please download qemu-user-static manually")
+	}
+
 	f, err := content.Open("bins/" + file + ".gz")
 	if err != nil {
 		return nil, err
