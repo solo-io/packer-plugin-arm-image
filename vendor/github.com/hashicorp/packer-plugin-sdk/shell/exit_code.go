@@ -33,7 +33,7 @@ func (e *ErrorInvalidExitCode) Error() string {
 	if e == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("Script exited with non-zero exit status: %d."+
+	return fmt.Sprintf("Script exited with non-zero exit status: %d. "+
 		"Allowed exit codes are: %v",
 		e.Code, e.Allowed)
 }

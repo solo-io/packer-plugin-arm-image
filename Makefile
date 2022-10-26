@@ -6,7 +6,7 @@ TEST?=$(shell go list ./...)
 check-generated:
 	./tools/check_generated.sh
 
-GORELEASER=go run github.com/goreleaser/goreleaser
+GORELEASER=go run github.com/goreleaser/goreleaser@v0.182.1
 
 build:
 	go generate ./...

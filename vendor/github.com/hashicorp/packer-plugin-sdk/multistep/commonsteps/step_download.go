@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	gcs "github.com/hashicorp/go-getter/gcs/v2"
 	s3 "github.com/hashicorp/go-getter/s3/v2"
@@ -55,13 +56,44 @@ type StepDownload struct {
 	Extension string
 }
 
-var defaultGetterClient = getter.Client{
-	Getters: getter.Getters,
-}
+// defaultGetterReadTimeout is the read timeout for downloading operations via go-getter.
+// The timeout must be long enough to accommodate large/slow downloads.
+const defaultGetterReadTimeout time.Duration = 30 * time.Minute
 
-func init() {
-	defaultGetterClient.Getters = append(defaultGetterClient.Getters, new(gcs.Getter))
-	defaultGetterClient.Getters = append(defaultGetterClient.Getters, new(s3.Getter))
+var defaultGetterClient = getter.Client{
+	// Disable writing and reading through symlinks.
+	DisableSymlinks: true,
+	// The order of the Getters in the list may affect the result
+	// depending if the Request.Src is detected as valid by multiple getters
+	Getters: []getter.Getter{
+		&getter.GitGetter{
+			Timeout: defaultGetterReadTimeout,
+			Detectors: []getter.Detector{
+				new(getter.GitHubDetector),
+				new(getter.GitDetector),
+				new(getter.BitBucketDetector),
+				new(getter.GitLabDetector),
+			},
+		},
+		&getter.HgGetter{
+			Timeout: defaultGetterReadTimeout,
+		},
+		new(getter.SmbClientGetter),
+		new(getter.SmbMountGetter),
+		&getter.HttpGetter{
+			Netrc:                 true,
+			XTerraformGetDisabled: true,
+			HeadFirstTimeout:      defaultGetterReadTimeout,
+			ReadTimeout:           defaultGetterReadTimeout,
+		},
+		new(getter.FileGetter),
+		&gcs.Getter{
+			Timeout: defaultGetterReadTimeout,
+		},
+		&s3.Getter{
+			Timeout: defaultGetterReadTimeout,
+		},
+	},
 }
 
 func (s *StepDownload) Run(ctx context.Context, state multistep.StateBag) multistep.StepAction {

@@ -206,6 +206,12 @@ func createFlattenedEnvVars(config *Config) (string, error) {
 		envVars[keyValue[0]] = strings.Replace(keyValue[1], "'", `'"'"'`, -1)
 	}
 
+	for k, v := range config.Env {
+		// Store pair, replacing any single quotes in value so they parse
+		// correctly with required environment variable format
+		envVars[k] = strings.Replace(v, "'", `'"'"'`, -1)
+	}
+
 	// Create a list of env var keys in sorted order
 	var keys []string
 	for k := range envVars {

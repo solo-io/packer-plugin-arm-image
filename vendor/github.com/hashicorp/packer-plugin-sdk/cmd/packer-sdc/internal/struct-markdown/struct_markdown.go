@@ -80,6 +80,8 @@ func (cmd *Command) Run(args []string) int {
 		log.Fatalf("ParseFile: %+v", err)
 	}
 
+	canonicalFilePath := filepath.ToSlash(filePath)
+
 	for _, decl := range f.Decls {
 		typeDecl, ok := decl.(*ast.GenDecl)
 		if !ok {
@@ -96,23 +98,23 @@ func (cmd *Command) Run(args []string) int {
 
 		fields := structDecl.Fields.List
 		header := Struct{
-			SourcePath: filePath,
+			SourcePath: canonicalFilePath,
 			Name:       typeSpec.Name.Name,
 			Filename:   typeSpec.Name.Name + ".mdx",
 			Header:     strings.TrimSpace(typeDecl.Doc.Text()),
 		}
 		dataSourceOutput := Struct{
-			SourcePath: filePath,
+			SourcePath: canonicalFilePath,
 			Name:       typeSpec.Name.Name,
 			Filename:   typeSpec.Name.Name + ".mdx",
 		}
 		required := Struct{
-			SourcePath: filePath,
+			SourcePath: canonicalFilePath,
 			Name:       typeSpec.Name.Name,
 			Filename:   typeSpec.Name.Name + "-required.mdx",
 		}
 		notRequired := Struct{
-			SourcePath: filePath,
+			SourcePath: canonicalFilePath,
 			Name:       typeSpec.Name.Name,
 			Filename:   typeSpec.Name.Name + "-not-required.mdx",
 		}

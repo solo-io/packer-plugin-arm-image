@@ -36,9 +36,14 @@ type Provisioner struct {
 	// for examples such as 3010 - "The requested operation is successful.
 	ValidExitCodes []int `mapstructure:"valid_exit_codes"`
 
-	// An array of environment variables that will be injected before
-	// your command(s) are executed.
+	// An array of environment variables that will be injected before your
+	// command(s) are executed. Any duplicate vars will be overridden by `env`.
 	Vars []string `mapstructure:"environment_vars"`
+
+	// An map of environment variables that will be injected before your
+	// command(s) are executed. Any duplicate `environment_vars` will be
+	// overridden by `env`.
+	Env map[string]string `mapstructure:"env"`
 
 	// This is used in the template generation to format environment variables
 	// inside the `ExecuteCommand` template.

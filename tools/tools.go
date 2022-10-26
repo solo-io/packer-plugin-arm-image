@@ -1,3 +1,4 @@
+//go:build tools
 // +build tools
 
 /*
@@ -11,6 +12,5 @@ package tools
 // this package should not be used.
 
 import (
-	_ "github.com/goreleaser/goreleaser"
 	_ "github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc"
 )
