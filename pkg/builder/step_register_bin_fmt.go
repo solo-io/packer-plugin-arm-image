@@ -2,17 +2,20 @@ package builder
 
 import (
 	"context"
+	"math/rand"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/hashicorp/packer-plugin-sdk/multistep"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 )
 
-const name = "packer-plugin-arm-image"
+const namePrefix = "packer-plugin-arm-image-"
 
 type stepRegisterBinFmt struct {
 	QemuPathKey string
+	BinfmtName string
 }
 
 // this info can be obtrained with
@@ -27,10 +30,12 @@ func (s *stepRegisterBinFmt) Run(_ context.Context, state multistep.StateBag) mu
 	// Read our value and assert that it is they type we want
 	ui := state.Get("ui").(packer.Ui)
 	qemu := state.Get(s.QemuPathKey).(string)
+	name := namePrefix + strconv.Itoa(int(rand.Uint32()))
 
-	ui.Say("Registering " + qemu + " with binfmt_misc")
+	ui.Say("Registering " + qemu + " with binfmt_misc as " + name)
 
 	registerstring_prefix := []byte{':'}
+
 	registerstring_prefix = append(registerstring_prefix, []byte(name)...)
 	registerstring_prefix = append(registerstring_prefix, ':', 'M', ':', ':')
 	if strings.Contains(qemu, "64") {
@@ -60,13 +65,16 @@ func (s *stepRegisterBinFmt) Run(_ context.Context, state multistep.StateBag) mu
 		ui.Error("binfmt_misc registration failed")
 		return multistep.ActionHalt
 	}
+	state.Put(s.BinfmtName, name);
 	return multistep.ActionContinue
 }
 
 func (s *stepRegisterBinFmt) Cleanup(state multistep.StateBag) {
 	ui := state.Get("ui").(packer.Ui)
+	name := state.Get(s.BinfmtName).(string)
 
-	f, err := os.OpenFile("/proc/sys/fs/binfmt_misc/"+name, os.O_RDWR, 0)
+	ui.Say("deregistering " + name + " with binfmt_misc")
+	f, err := os.OpenFile("/proc/sys/fs/binfmt_misc/" + name, os.O_RDWR, 0)
 	if err != nil {
 		ui.Error(err.Error())
 		return
