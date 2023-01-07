@@ -37,6 +37,7 @@ builds:
       - '-s -w -X {{ .ModulePath }}/version.Version={{.Version}} -X {{ .ModulePath }}/version.VersionPrerelease= '
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
       - '386'
