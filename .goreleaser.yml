@@ -25,6 +25,7 @@ builds:
       - '-s -w -X {{ .ModulePath }}/version.Version={{.Version}} -X {{ .ModulePath }}/version.VersionPrerelease= '
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
     binary: '{{ .ProjectName }}_v{{ .Version }}_{{ .Env.API_VERSION }}_{{ .Os }}_{{ .Arch }}'
@@ -37,6 +38,7 @@ builds:
       - '-s -w -X {{ .ModulePath }}/version.Version={{.Version}} -X {{ .ModulePath }}/version.VersionPrerelease= '
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
       - '386'
@@ -56,6 +58,7 @@ builds:
       - '-s -w -X {{ .ModulePath }}/version.Version={{.Version}} -X {{ .ModulePath }}/version.VersionPrerelease= '
     goos:
       - linux
+      - darwin
     goarch:
       - amd64
       - '386'
@@ -70,6 +73,8 @@ archives:
 checksum:
   name_template: '{{ .ProjectName }}_v{{ .Version }}_SHA256SUMS'
   algorithm: sha256
+
+
 
 release:
   # If you want to manually examine the release before its live, uncomment this line:
