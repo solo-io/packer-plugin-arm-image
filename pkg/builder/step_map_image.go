@@ -37,8 +37,8 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 	//   --show outputs used loop device path
 	// Output example:
 	//   /dev/loop10
-	out, err := exec.Command("losetup", "--show", "-f", "-P", image).CombinedOutput()
-	ui.Say(fmt.Sprintf("losetup --show -f -P %s", image))
+	out, err := exec.Command("sudo", "losetup", "--show", "-f", "-P", image).CombinedOutput()
+	ui.Say(fmt.Sprintf("sudo losetup --show -f -P %s", image))
 	if err != nil {
 		ui.Error(fmt.Sprintf("error losetup --show -f -P %v: %s", err, string(out)))
 		s.Cleanup(state)
