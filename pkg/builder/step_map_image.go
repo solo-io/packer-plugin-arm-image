@@ -48,7 +48,6 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 	loop := strings.Split(path, "/")[2]
 	prefix := loop + "p"
 
-	time.Sleep(2 * time.Second)
 	// Look for all partitions of created loopback
 	var partitions []string
 	cPartitions := make(chan []string)
@@ -95,7 +94,7 @@ func (s *stepMapImage) Run(_ context.Context, state multistep.StateBag) multiste
 			n_j, _ := strconv.Atoi(partitions[j][len(partPrefix):])
 			return n_i < n_j
 		})
-	case <-time.After(time.Second):
+	case <-time.After(60*time.Second):
 		cancel()
 	}
 
