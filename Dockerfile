@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:1.17.2-buster AS builder
+FROM golang:1.25.0-bookworm AS builder
 RUN apt-get update -qq \
  && apt-get install -qqy git && \
  mkdir /build
@@ -27,7 +27,7 @@ RUN apt-get update -qq \
   sudo \
  && rm -rf /var/lib/apt/lists/*
 
-ENV PACKER_VERSION 1.7.6
+ENV PACKER_VERSION=1.13.0
 
 RUN wget https://releases.hashicorp.com/packer/${PACKER_VERSION}/packer_${PACKER_VERSION}_linux_amd64.zip -O /tmp/packer.zip && \
   unzip /tmp/packer.zip -d /bin && \
