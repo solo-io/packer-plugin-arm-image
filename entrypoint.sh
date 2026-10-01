@@ -6,4 +6,5 @@ PACKER=/bin/packer
 
 echo running $PACKER
 
+$PACKER init .
 exec $PACKER "${@}"
