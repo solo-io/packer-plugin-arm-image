@@ -11,9 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v1
+        uses: actions/checkout@50fbc622fc4ef5163becd7fab6573eac35f8462e # v1.2.0
       - name: Publish to Registry
-        uses: elgohr/Publish-Docker-Github-Action@2.8
+        uses: elgohr/Publish-Docker-Github-Action@02076157a9ae9a7537cc135d1b745a517fe1015f # 2.8
         with:
           name: ${{ github.repository }}
           username: ${{ github.actor }}

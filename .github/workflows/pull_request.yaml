@@ -14,12 +14,12 @@ jobs:
     name: build-works
     runs-on: ubuntu-18.04
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
     - name: Set up Go 1.18
-      uses: actions/setup-go@v3.0.0
+      uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # v3.0.0
       with:
         go-version: '1.18.0-rc.1'
-    - uses: actions/cache@v2
+    - uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
@@ -58,12 +58,12 @@ jobs:
     env:
       TAGGED_VERSION: ${{github.event.release.tag_name}}
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@0717577d45739eb3c851188b29f50ed6c0b2194e # v2.8.0
     - name: Set up Go 1.18
-      uses: actions/setup-go@v3.0.0
+      uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # v3.0.0
       with:
         go-version: '1.18.0-rc.1'
-    - uses: actions/cache@v2
+    - uses: actions/cache@8492260343ad570701412c2f464a5877dc76bace # v2
       with:
         path: ~/go/pkg/mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
